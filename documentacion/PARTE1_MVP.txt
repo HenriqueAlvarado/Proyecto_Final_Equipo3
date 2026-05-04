@@ -1,0 +1,577 @@
+================================================================================
+MEDISYNC - CLINICA SAN ANGEL
+DOCUMENTACION TECNICA - PARTE 1: MVP (Entrega 2 - 7 de Mayo)
+================================================================================
+Proyecto: MediSync
+Equipo: Equipo 3
+Desarrollador Web: Henrique Alejandro Alvarado Castillo
+Fecha de inicio: 4 de Mayo de 2026
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. CONFIGURACION DEL ENTORNO DE DESARROLLO
+--------------------------------------------------------------------------------
+
+1.1 Conexion con AWS Academy
+------------------------------
+- Se instalo AWS CLI en la terminal local (Windows)
+- Se configuraron las credenciales del laboratorio de AWS Academy mediante:
+    aws configure set aws_access_key_id <KEY>
+    aws configure set aws_secret_access_key <SECRET>
+    aws configure set aws_session_token <TOKEN>
+    aws configure set region us-east-1
+
+NOTA IMPORTANTE: Las credenciales de AWS Academy son temporales. Expiran cada
+vez que el laboratorio se pausa o reinicia. Cada vez que esto ocurra se deben
+obtener nuevas credenciales desde Canvas > AWS Details > Show y repetir el
+proceso de configuracion.
+
+Verificacion de conexion exitosa:
+    aws sts get-caller-identity
+    Resultado: Usuario Henrique_Alejandro_Alvarado_Castillo, Cuenta 232913366351
+
+1.2 Conexion con GitHub
+------------------------------
+- Se genero una llave SSH con el comando:
+    ssh-keygen -t ed25519 -C "github-kiro" -f "$HOME/.ssh/id_ed25519"
+- La llave publica se agrego manualmente en GitHub > Settings > SSH Keys
+- Se clono el repositorio existente:
+    git clone https://github.com/HenriqueAlvarado/Proyecto_Final_Equipo3.git
+
+ERROR ENCONTRADO: Al intentar hacer push, el repositorio remoto tenia commits
+que no existian localmente (el archivo MediSync_Wireframes.html).
+SOLUCION: Se ejecuto git pull con merge automatico:
+    git commit -m "Merge branch main..."
+    git push -u origin main
+
+
+--------------------------------------------------------------------------------
+2. INFRAESTRUCTURA AWS CREADA
+--------------------------------------------------------------------------------
+
+2.1 Recursos verificados antes de crear
+-----------------------------------------
+- VPC Default: vpc-0b0440f37d5fcc394 (172.31.0.0/16)
+- Key Pair disponible: vockey
+- Security Group default: sg-07a1ed8434b01eb8f
+- RDS existente: ninguno
+- EC2 existente: ninguno
+
+2.2 Security Groups
+---------------------
+Se crearon dos Security Groups:
+
+a) medisync-backend-sg (sg-0ed1ca6343fd26030)
+   Reglas de entrada:
+   - Puerto 22  (SSH)   desde 0.0.0.0/0
+   - Puerto 80  (HTTP)  desde 0.0.0.0/0
+   - Puerto 443 (HTTPS) desde 0.0.0.0/0
+   - Puerto 3000 (Node.js) desde 0.0.0.0/0
+
+b) medisync-rds-sg (sg-03523e4b7907f7c2c)
+   Reglas de entrada:
+   - Puerto 5432 (PostgreSQL) solo desde sg-0ed1ca6343fd26030 (backend)
+
+2.3 Buckets S3
+----------------
+a) medisync-web-20260501
+   - Uso: Hosting estatico del frontend React
+   - Block public access: DESACTIVADO
+   - Politica de bucket: GetObject publico para todos
+   - Static website hosting: ACTIVADO
+   - Index document: index.html
+   - Error document: index.html (para routing de React)
+   - URL: http://medisync-web-20260501.s3-website-us-east-1.amazonaws.com
+
+b) medisync-fotos-20260501
+   - Uso: Almacenamiento de fotos de medicos
+   - Block public access: DESACTIVADO
+   - Politica de bucket: GetObject publico para todos
+
+2.4 RDS PostgreSQL
+--------------------
+- Identificador: medisync-db
+- Motor: PostgreSQL 15.17
+- Clase: db.t3.micro
+- Almacenamiento: 20 GB gp2
+- Usuario: medisync_admin
+- Password: MediSync2026!
+- Base de datos: medisync_db
+- Endpoint: medisync-db.ccmbha3tv2ap.us-east-1.rds.amazonaws.com
+- Puerto: 5432
+- Acceso publico: SI (para conexion desde EC2)
+- Security Group: medisync-rds-sg
+- Estado inicial: creating (tarda ~5 minutos en estar disponible)
+- Estado final: available
+
+2.5 EC2 Backend
+-----------------
+- Instance ID: i-0c00ea2f3163f4b5a
+- AMI: ami-0e1e769742d1cfb49 (Amazon Linux 2023)
+- Tipo: t2.micro
+- Key Pair: vockey
+- Security Group: medisync-backend-sg
+- IAM Role: LabInstanceProfile
+- IP inicial asignada por AWS Academy: 100.31.109.89 (IP privada/interna)
+- User Data (instalacion automatica al lanzar):
+    - Node.js 18.x
+    - Git
+    - PM2
+    - Directorio /home/ec2-user/medisync-backend
+
+ERROR ENCONTRADO: La IP 100.31.109.89 asignada por AWS Academy es una IP
+Carrier-Grade NAT (rango 100.x.x.x). Aunque aparece como "publica" en la
+consola de AWS, NO es accesible desde internet normal. Los dispositivos
+externos (celulares, otras computadoras) no pueden conectarse a ella.
+SOLUCION: Se asigno una Elastic IP real (ver seccion 2.6).
+
+2.6 Elastic IP
+----------------
+- IP asignada: 3.219.251.228
+- Allocation ID: eipalloc-0896efb6b7335e7e3
+- Asociada a: i-0c00ea2f3163f4b5a
+- Esta IP es FIJA y no cambia aunque el lab se pause o reinicie
+- Ventaja: No es necesario hacer rebuild del frontend cada vez que reinicia el lab
+
+
+--------------------------------------------------------------------------------
+3. ESTRUCTURA DEL PROYECTO REACT (medisync-web)
+--------------------------------------------------------------------------------
+
+Tecnologias:
+- React 18.2.0 (JavaScript, no TypeScript)
+- React Router DOM 6.22.3
+- Axios 1.6.8
+- CSS Variables (sin frameworks externos)
+- Desplegado en S3 Static Website Hosting
+
+Estructura de carpetas creada:
+medisync-web/
+├── public/
+│   └── index.html
+├── src/
+│   ├── assets/styles/
+│   │   ├── global.css          (estilos globales, layout)
+│   │   └── variables.css       (paleta de colores, tipografia, espaciado)
+│   ├── components/
+│   │   ├── common/
+│   │   │   ├── Button.jsx + Button.css
+│   │   │   ├── Input.jsx + Input.css
+│   │   │   ├── Card.jsx + Card.css
+│   │   │   ├── Navbar.jsx + Navbar.css
+│   │   │   └── Sidebar.jsx + Sidebar.css
+│   │   ├── auth/
+│   │   │   └── LoginForm.jsx + LoginForm.css
+│   │   ├── appointments/
+│   │   │   ├── AgendaView.jsx + AgendaView.css
+│   │   │   ├── CreateAppointmentForm.jsx
+│   │   │   ├── EditAppointmentForm.jsx
+│   │   │   └── CancelAppointmentModal.jsx + CancelAppointmentModal.css
+│   │   ├── patients/
+│   │   │   ├── PatientList.jsx
+│   │   │   ├── PatientForm.jsx
+│   │   │   └── PatientSearch.jsx
+│   │   ├── doctors/
+│   │   │   ├── DoctorList.jsx + DoctorList.css
+│   │   │   └── DoctorCard.jsx + DoctorCard.css
+│   │   ├── dashboard/
+│   │   │   └── Dashboard.jsx + Dashboard.css
+│   │   └── users/
+│   │       ├── UserForm.jsx + UserForm.css
+│   │       └── UserList.jsx + UserList.css
+│   ├── pages/
+│   │   ├── LoginPage.jsx + LoginPage.css
+│   │   ├── DashboardPage.jsx
+│   │   ├── AgendaPage.jsx
+│   │   ├── PatientsPage.jsx
+│   │   ├── DoctorsPage.jsx
+│   │   ├── UsersPage.jsx
+│   │   └── NotFoundPage.jsx
+│   ├── services/
+│   │   ├── api.js              (configuracion Axios, interceptores JWT)
+│   │   ├── authService.js      (login, logout, register, getUsuarios, toggle)
+│   │   ├── appointmentService.js
+│   │   ├── patientService.js
+│   │   └── doctorService.js
+│   ├── hooks/
+│   │   ├── useAuth.js
+│   │   └── useForm.js
+│   ├── utils/
+│   │   ├── validators.js
+│   │   └── formatters.js
+│   ├── contexts/
+│   │   └── AuthContext.jsx
+│   ├── App.jsx
+│   └── index.js
+├── .gitignore
+├── .env                        (NO subir a GitHub)
+├── .env.example
+├── package.json
+└── README.md
+
+Paleta de colores (variables.css):
+- Primary: #1a73e8 (azul medico)
+- Secondary: #34a853 (verde)
+- Danger: #ea4335 (rojo)
+- Warning: #fbbc04 (amarillo)
+- Grises: escala de #f8f9fa a #202124
+
+
+--------------------------------------------------------------------------------
+4. HISTORIAS DE USUARIO IMPLEMENTADAS EN EL MVP
+--------------------------------------------------------------------------------
+
+HU-01: Login de recepcionista (web)
+- Pantalla: LoginPage.jsx
+- Componente: LoginForm.jsx
+- Servicio: authService.js > login()
+- Endpoint: POST /api/auth/login
+- Validaciones: email formato valido, password requerido
+- Manejo de errores: mensaje de credenciales incorrectas
+
+HU-04: Crear cita (web - recepcionista)
+- Pantalla: AgendaPage.jsx
+- Componente: CreateAppointmentForm.jsx
+- Servicio: appointmentService.js > createAppointment()
+- Endpoint: POST /api/citas
+- Validaciones: paciente, medico, fecha, hora, motivo requeridos
+- Verifica disponibilidad del medico en ese horario
+
+HU-05: Ver agenda del dia (web - recepcionista)
+- Pantalla: AgendaPage.jsx
+- Componente: AgendaView.jsx
+- Servicio: appointmentService.js > getAppointmentsByDate()
+- Endpoint: GET /api/citas?fecha=YYYY-MM-DD
+- Muestra tabla con hora, paciente, medico, motivo, estado
+
+HU-06: Cancelar cita (web - recepcionista)
+- Componente: CancelAppointmentModal.jsx
+- Servicio: appointmentService.js > cancelAppointment()
+- Endpoint: PATCH /api/citas/:id/cancelar
+- Modal de confirmacion antes de cancelar
+
+HU-07: Modificar cita (web - recepcionista)
+- Componente: EditAppointmentForm.jsx
+- Servicio: appointmentService.js > updateAppointment()
+- Endpoint: PUT /api/citas/:id
+
+HU-10: Ver lista de medicos (web)
+- Pantalla: DoctorsPage.jsx
+- Componente: DoctorList.jsx, DoctorCard.jsx
+- Servicio: doctorService.js > getDoctors()
+- Endpoint: GET /api/medicos
+
+HU-15: Registrar nuevo paciente (web - recepcionista)
+- Pantalla: PatientsPage.jsx
+- Componente: PatientForm.jsx
+- Servicio: patientService.js > createPatient()
+- Endpoint: POST /api/pacientes
+- Campos: nombre, apellido, email, telefono, fecha_nacimiento, CURP, direccion
+
+HU-18: Cerrar sesion (web)
+- Componente: Navbar.jsx
+- Servicio: authService.js > logout()
+- Elimina token y user de localStorage
+- Redirige a /login
+
+HU-21: Ver agenda como medico (web - medico)
+- Misma pantalla AgendaPage.jsx
+- El backend filtra automaticamente las citas del medico autenticado
+- Endpoint: GET /api/citas (con filtro por medico_id en backend)
+
+
+--------------------------------------------------------------------------------
+5. BACKEND NODE.JS + EXPRESS
+--------------------------------------------------------------------------------
+
+Tecnologias:
+- Node.js 18.x
+- Express 4.18.2
+- bcryptjs 2.4.3 (hash de passwords)
+- jsonwebtoken 9.0.2 (autenticacion JWT)
+- pg 8.11.3 (cliente PostgreSQL)
+- cors 2.8.5
+- dotenv 16.4.5
+- nodemailer 6.9.13 (preparado para SendGrid)
+- axios 1.6.8
+
+Estructura:
+medisync-backend/
+├── src/
+│   ├── index.js                (servidor principal)
+│   ├── config/
+│   │   ├── database.js         (conexion RDS con SSL)
+│   │   └── schema.sql          (tablas y datos iniciales)
+│   ├── middleware/
+│   │   └── auth.middleware.js  (validacion JWT + control de roles)
+│   ├── routes/
+│   │   ├── auth.routes.js      (login, register, usuarios)
+│   │   └── citas.routes.js     (CRUD de citas)
+│   │   └── pacientes.routes.js (CRUD de pacientes)
+│   │   └── medicos.routes.js   (listado de medicos)
+│   └── services/
+│       └── email.service.js    (SendGrid API)
+├── .env                        (NO subir a GitHub)
+├── .env.example
+├── package.json
+└── README.md
+
+Variables de entorno (.env en EC2):
+    PORT=3000
+    NODE_ENV=production
+    DB_HOST=medisync-db.ccmbha3tv2ap.us-east-1.rds.amazonaws.com
+    DB_PORT=5432
+    DB_NAME=medisync_db
+    DB_USER=medisync_admin
+    DB_PASSWORD=MediSync2026!
+    JWT_SECRET=MediSync_JWT_Secret_ClínicaSanAngel_2026_Seguro
+    JWT_EXPIRES_IN=8h
+    SENDGRID_API_KEY=(pendiente configurar)
+    SENDGRID_FROM=noreply@clinicasanangel.com
+    S3_BUCKET_FOTOS=medisync-fotos-20260501
+    AWS_REGION=us-east-1
+    FRONTEND_URL=*
+
+Schema de base de datos (tablas creadas):
+- usuarios: id, nombre, apellido, email, password_hash, rol, activo
+- medicos: id, usuario_id, especialidad, cedula_profesional, foto_url
+- pacientes: id, nombre, apellido, email, telefono, fecha_nacimiento, curp, direccion
+- citas: id, paciente_id, medico_id, fecha, hora, motivo, estado, notas, created_by
+
+Indices creados:
+- idx_citas_fecha
+- idx_citas_medico
+- idx_citas_paciente
+- idx_pacientes_email
+- idx_pacientes_curp
+
+Usuario inicial creado:
+- Email: admin@clinicasanangel.com
+- Password: password
+- Rol: director
+
+
+--------------------------------------------------------------------------------
+6. ENDPOINTS DE LA API (MVP)
+--------------------------------------------------------------------------------
+
+Autenticacion:
+  POST   /api/auth/login              Login, retorna JWT
+  POST   /api/auth/logout             Logout (cliente elimina token)
+  POST   /api/auth/register           Crear usuario (solo director)
+  GET    /api/auth/usuarios           Listar usuarios (solo director)
+  PATCH  /api/auth/usuarios/:id/toggle Activar/desactivar usuario (solo director)
+
+Citas:
+  GET    /api/citas?fecha=YYYY-MM-DD  Citas por fecha
+  POST   /api/citas                   Crear cita
+  PUT    /api/citas/:id               Modificar cita
+  PATCH  /api/citas/:id/cancelar      Cancelar cita
+  GET    /api/citas/mis-citas         Citas del medico autenticado
+
+Pacientes:
+  GET    /api/pacientes               Listar todos
+  GET    /api/pacientes/buscar?q=     Buscar por nombre/email/CURP
+  GET    /api/pacientes/:id           Detalle de paciente
+  POST   /api/pacientes               Registrar paciente
+
+Medicos:
+  GET    /api/medicos                 Listar todos
+  GET    /api/medicos/:id             Detalle de medico
+
+Health check:
+  GET    /health                      Estado del servidor
+
+
+--------------------------------------------------------------------------------
+7. DESPLIEGUE EN EC2
+--------------------------------------------------------------------------------
+
+Pasos realizados para levantar el backend:
+
+1. Conexion SSH:
+   ssh -i "C:\Users\henri\Downloads\labsuser (16).pem" ec2-user@3.219.251.228
+
+2. Clonar repositorio:
+   git clone https://github.com/HenriqueAlvarado/Proyecto_Final_Equipo3.git /home/ec2-user/repo
+
+3. Instalar dependencias:
+   cd /home/ec2-user/repo/medisync-backend
+   npm install --omit=dev
+
+4. Crear archivo .env:
+   cat > .env << EOF
+   (variables de entorno)
+   EOF
+
+5. Instalar cliente PostgreSQL y crear tablas:
+   sudo dnf install -y postgresql15
+   PGPASSWORD='MediSync2026!' psql -h medisync-db... -U medisync_admin -d medisync_db -f src/config/schema.sql
+
+6. Levantar con PM2:
+   pm2 start src/index.js --name medisync-api
+   pm2 save
+
+Verificacion:
+   curl http://localhost:3000/health
+   Respuesta: {"status":"ok","timestamp":"..."}
+
+NOTA: Cada vez que el lab se pausa, PM2 pierde el proceso. Al reiniciar el lab
+se debe volver a ejecutar:
+   pm2 start src/index.js --name medisync-api
+   pm2 save
+
+
+--------------------------------------------------------------------------------
+8. DESPLIEGUE DEL FRONTEND EN S3
+--------------------------------------------------------------------------------
+
+Proceso de build y deploy:
+
+1. Configurar .env con la IP del backend:
+   REACT_APP_API_URL=http://3.219.251.228:3000/api
+
+2. Instalar dependencias (primera vez):
+   npm install
+
+3. Generar build de produccion:
+   npm run build
+
+4. Subir a S3:
+   aws s3 sync build/ s3://medisync-web-20260501 --delete
+
+URL del sitio: http://medisync-web-20260501.s3-website-us-east-1.amazonaws.com
+
+IMPORTANTE: El build quema la URL del backend en el JavaScript compilado.
+Si la IP del backend cambia, se debe actualizar .env y hacer un nuevo build.
+Con la Elastic IP 3.219.251.228 esto ya no es necesario.
+
+
+--------------------------------------------------------------------------------
+9. ERRORES ENCONTRADOS Y SOLUCIONES (MVP)
+--------------------------------------------------------------------------------
+
+ERROR 1: npm install timeout
+Descripcion: npm install de react-scripts tarda mas de 2 minutos y el comando
+             sincrono expira.
+Solucion: Ejecutar npm install como proceso en background con controlPwshProcess
+          y esperar con Start-Sleep antes de verificar el resultado.
+
+ERROR 2: Build con IP vieja quemada
+Descripcion: Despues de cambiar la IP en .env, el build seguia usando la IP
+             anterior porque el proceso de build estaba en cache.
+Solucion: Eliminar la carpeta build/ antes de hacer npm run build:
+          Remove-Item -Recurse -Force build
+          npm run build
+
+ERROR 3: IP 100.31.x.x no accesible desde internet
+Descripcion: AWS Academy asigna IPs en el rango 100.x.x.x (Carrier-Grade NAT)
+             que no son accesibles desde dispositivos externos a la red de AWS.
+Solucion: Asignar una Elastic IP real (3.219.251.228) al EC2.
+
+ERROR 4: ERR_SSL_PROTOCOL_ERROR en celular
+Descripcion: Chrome en movil fuerza HTTPS automaticamente. El S3 static hosting
+             solo sirve HTTP, causando ERR_SSL_PROTOCOL_ERROR.
+Solucion parcial: Usar Firefox o escribir http:// explicitamente.
+Solucion permanente pendiente: CloudFront (no disponible en AWS Academy) o
+             servir desde EC2 con Nginx + certificado SSL.
+
+ERROR 5: CORS timeout
+Descripcion: El frontend recibia "timeout of 10000ms exceeded" al intentar
+             conectarse al backend.
+Causa: La configuracion de CORS usaba process.env.FRONTEND_URL que tenia
+       el valor "*" como string, pero Express no acepta "*" como string en
+       la opcion origin.
+Solucion: Cambiar la configuracion de CORS en index.js para usar una funcion
+          callback que acepta cualquier origen:
+          origin: (origin, callback) => { callback(null, true); }
+
+ERROR 6: PM2 pierde procesos al reiniciar el lab
+Descripcion: Cuando el lab de AWS Academy se pausa y reinicia, PM2 no
+             recupera automaticamente los procesos aunque se haya ejecutado
+             pm2 save.
+Causa: El lab reinicia la instancia EC2 completamente, perdiendo el estado
+       de PM2 en memoria.
+Solucion: Cada vez que se reinicia el lab, conectarse por SSH y ejecutar:
+          pm2 start src/index.js --name medisync-api
+
+ERROR 7: Credenciales AWS expiradas
+Descripcion: Las credenciales de AWS Academy expiran cuando el lab se pausa.
+             Comandos como aws s3 sync fallan con AccessDenied.
+Solucion: Obtener nuevas credenciales desde Canvas > AWS Details > Show
+          y ejecutar aws configure set para cada valor.
+
+ERROR 8: IP del EC2 cambia al reiniciar
+Descripcion: Cada vez que el lab se pausa y reinicia, AWS Academy asigna
+             una nueva IP al EC2 (de 54.196.144.76 a 100.31.109.89).
+Solucion: Asignar Elastic IP fija (3.219.251.228) que persiste entre reinicios.
+
+ERROR 9: SSH con PEM file - permisos incorrectos
+Descripcion: Windows requiere permisos especificos en el archivo .pem para
+             que SSH lo acepte.
+Solucion:
+    icacls "archivo.pem" /inheritance:r
+    icacls "archivo.pem" /grant:r "%USERNAME%:R"
+
+ERROR 10: git push rechazado (non-fast-forward)
+Descripcion: El repositorio remoto tenia commits que no existian localmente
+             (MediSync_Wireframes.html subido por otro miembro del equipo).
+Solucion: Hacer git pull primero para integrar los cambios remotos, luego push.
+          Se uso --no-edit para evitar abrir el editor vim para el mensaje
+          de merge.
+
+
+--------------------------------------------------------------------------------
+10. ESTADO ACTUAL DEL MVP
+--------------------------------------------------------------------------------
+
+Frontend (React en S3):
+[x] Pantalla de login
+[x] Dashboard con estadisticas del dia
+[x] Agenda con selector de fecha
+[x] Crear cita (formulario completo)
+[x] Editar cita
+[x] Cancelar cita (modal de confirmacion)
+[x] Listado de pacientes con busqueda
+[x] Registrar nuevo paciente
+[x] Listado de medicos con tarjetas
+[x] Gestion de usuarios (solo director)
+[x] Cerrar sesion
+[x] Rutas protegidas por rol
+[x] Sidebar con navegacion por rol
+
+Backend (Node.js en EC2):
+[x] Autenticacion JWT
+[x] Login / Logout
+[x] Registro de usuarios (con transaccion, crea medico si aplica)
+[x] CRUD de citas
+[x] CRUD de pacientes
+[x] Listado de medicos
+[x] Middleware de autenticacion y roles
+[x] Conexion a RDS PostgreSQL con SSL
+[x] CORS configurado
+[x] Health check endpoint
+
+Base de datos (RDS PostgreSQL):
+[x] Tablas creadas: usuarios, medicos, pacientes, citas
+[x] Indices de busqueda
+[x] Usuario director inicial
+
+Infraestructura AWS:
+[x] EC2 t2.micro corriendo con PM2
+[x] RDS PostgreSQL 15 disponible
+[x] S3 web hosting activo
+[x] S3 fotos configurado
+[x] Elastic IP fija: 3.219.251.228
+[x] Security Groups configurados
+
+Pendiente para MVP completo:
+[ ] Configurar SendGrid API Key para envio de correos (HU-13)
+[ ] Solucion HTTPS para acceso desde celular
+[ ] Datos de prueba en la base de datos
+
+
+================================================================================
+FIN DE PARTE 1 - MVP
+================================================================================

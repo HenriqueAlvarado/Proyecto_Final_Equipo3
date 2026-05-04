@@ -1,0 +1,467 @@
+================================================================================
+MEDISYNC - CLINICA SAN ANGEL
+DOCUMENTACION TECNICA - PARTE 2: AVANCES ENTREGA FINAL (12 de Mayo)
+================================================================================
+Proyecto: MediSync
+Equipo: Equipo 3
+Desarrollador Web: Henrique Alejandro Alvarado Castillo
+Fecha: 4 de Mayo de 2026
+================================================================================
+
+
+--------------------------------------------------------------------------------
+1. MODULOS ADICIONALES IMPLEMENTADOS (MAS ALLA DEL MVP)
+--------------------------------------------------------------------------------
+
+1.1 Gestion de Usuarios (HU adicional - Director)
+---------------------------------------------------
+Descripcion: El director puede crear, ver y activar/desactivar usuarios del
+sistema (recepcionistas, medicos y otros directores) desde la interfaz web.
+
+Backend - Nuevos endpoints en auth.routes.js:
+
+  POST /api/auth/register
+  - Solo accesible por el rol "director"
+  - Crea usuario en tabla "usuarios"
+  - Si el rol es "medico", crea automaticamente el registro en tabla "medicos"
+  - Usa transaccion de base de datos (BEGIN/COMMIT/ROLLBACK) para garantizar
+    consistencia: si falla la insercion en "medicos", se revierte todo
+  - Validaciones:
+    * Todos los campos requeridos presentes
+    * Rol valido (recepcionista, medico, director)
+    * Password minimo 8 caracteres
+    * Especialidad requerida si rol = medico
+    * Email unico (retorna 409 si ya existe)
+  - Hash de password con bcrypt (10 salt rounds)
+
+  GET /api/auth/usuarios
+  - Solo accesible por el rol "director"
+  - Retorna todos los usuarios con JOIN a tabla medicos
+  - Incluye: id, nombre, apellido, email, rol, activo, especialidad, cedula
+
+  PATCH /api/auth/usuarios/:id/toggle
+  - Solo accesible por el rol "director"
+  - Activa o desactiva un usuario (NOT activo)
+  - Proteccion: el director no puede desactivarse a si mismo
+  - Retorna el usuario actualizado
+
+Frontend - Nuevos componentes:
+
+  src/components/users/UserForm.jsx
+  - Formulario de registro de nuevo usuario
+  - Campos: nombre, apellido, email, password, confirmar password, rol
+  - Campos adicionales para medicos: especialidad, cedula profesional
+  - Los campos de medico aparecen/desaparecen segun el rol seleccionado
+  - Validacion de que passwords coincidan
+  - Manejo de errores del servidor (email duplicado, etc.)
+
+  src/components/users/UserList.jsx
+  - Tabla de usuarios con badges de color por rol:
+    * Director: morado
+    * Medico: azul
+    * Recepcionista: verde
+  - Badge de estado: Activo (verde) / Inactivo (rojo)
+  - Filas inactivas con opacidad reducida
+  - Boton de Activar/Desactivar con estado de carga individual
+
+  src/pages/UsersPage.jsx
+  - Pagina completa de gestion de usuarios
+  - Boton "Nuevo usuario" que muestra/oculta el formulario
+  - Mensajes de exito con auto-desaparicion (3 segundos)
+  - Mensajes de error
+  - Recarga automatica de la lista al crear o cambiar estado
+
+  Ruta agregada en App.jsx:
+  - /usuarios -> UsersPage (protegida, solo director)
+
+  Sidebar actualizado:
+  - Nuevo item "Usuarios" con icono de llave, visible solo para director
+
+
+--------------------------------------------------------------------------------
+2. MEJORAS DE ARQUITECTURA
+--------------------------------------------------------------------------------
+
+2.1 Configuracion CORS mejorada
+---------------------------------
+Problema original: CORS configurado con origin: process.env.FRONTEND_URL
+que no funcionaba correctamente con el valor "*" como string.
+
+Solucion implementada en src/index.js:
+    app.use(cors({
+      origin: (origin, callback) => {
+        callback(null, true); // Acepta cualquier origen
+      },
+      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+      allowedHeaders: ['Content-Type', 'Authorization'],
+      credentials: true,
+    }));
+
+Justificacion: Para el entorno de laboratorio con IPs dinamicas y S3 HTTP,
+es necesario aceptar cualquier origen. En produccion real se restringiria
+al dominio especifico del frontend.
+
+2.2 Elastic IP para estabilidad
+---------------------------------
+Se asigno una Elastic IP (3.219.251.228) al EC2 para:
+- Tener una IP fija que no cambie entre reinicios del lab
+- Permitir acceso desde internet real (no solo desde la red de AWS)
+- Evitar tener que hacer rebuild del frontend cada vez que reinicia el lab
+
+Proceso:
+    aws ec2 allocate-address --domain vpc
+    aws ec2 associate-address --instance-id i-0c00ea2f3163f4b5a
+                              --allocation-id eipalloc-0896efb6b7335e7e3
+
+2.3 Transacciones en base de datos
+------------------------------------
+El endpoint de registro de usuarios usa transacciones PostgreSQL para
+garantizar consistencia cuando se crea un medico:
+
+    BEGIN
+    INSERT INTO usuarios ...
+    INSERT INTO medicos ...  (solo si rol = medico)
+    COMMIT
+    -- Si cualquier INSERT falla: ROLLBACK
+
+Esto evita tener un usuario creado sin su registro de medico correspondiente.
+
+
+--------------------------------------------------------------------------------
+3. DOCUMENTACION DE COMPONENTES WEB
+--------------------------------------------------------------------------------
+
+3.1 Componentes Comunes (src/components/common/)
+--------------------------------------------------
+
+Button.jsx
+  Props:
+  - children: contenido del boton
+  - variant: 'primary' | 'secondary' | 'danger' | 'outline' (default: primary)
+  - size: 'sm' | 'md' | 'lg' (default: md)
+  - disabled: boolean (default: false)
+  - loading: boolean - muestra spinner y deshabilita (default: false)
+  - onClick: funcion
+  - type: 'button' | 'submit' | 'reset' (default: button)
+  - fullWidth: boolean - ocupa 100% del ancho (default: false)
+  Accesibilidad: aria-disabled cuando loading o disabled
+
+Input.jsx
+  Props:
+  - label: texto de la etiqueta
+  - error: mensaje de error (muestra borde rojo y texto de error)
+  - id: requerido para asociar label con input
+  - type: tipo de input HTML (default: text)
+  - required: boolean - muestra asterisco en label
+  - disabled: boolean
+  Accesibilidad: aria-invalid, aria-describedby para errores
+
+Card.jsx
+  Props:
+  - title: titulo opcional con linea separadora
+  - className: clases adicionales
+  - children: contenido
+
+Navbar.jsx
+  - Muestra logo, nombre del sistema y clinica
+  - Muestra nombre y rol del usuario autenticado
+  - Boton de cerrar sesion
+  - Usa useAuth() para obtener datos del usuario
+
+Sidebar.jsx
+  - Navegacion principal con iconos
+  - Filtra items segun el rol del usuario autenticado
+  - Resalta el item activo con borde azul
+  - Items por rol:
+    * Todos: Dashboard
+    * Recepcionista + Medico: Agenda
+    * Recepcionista: Pacientes
+    * Recepcionista + Director: Medicos
+    * Director: Usuarios
+
+3.2 Contexto de Autenticacion (src/contexts/AuthContext.jsx)
+--------------------------------------------------------------
+- Provee: user, login, logout, loading
+- Persiste sesion en localStorage (token + user)
+- Al cargar la app, recupera sesion guardada
+- login(): llama API, guarda token y user, actualiza estado
+- logout(): limpia localStorage, resetea estado
+
+3.3 Servicios API (src/services/)
+-----------------------------------
+api.js (configuracion Axios):
+- baseURL: REACT_APP_API_URL del .env
+- timeout: 10000ms
+- Interceptor de request: agrega header Authorization: Bearer <token>
+- Interceptor de response: si 401, limpia sesion y redirige a /login
+- Extrae mensaje de error del response para mostrarlo al usuario
+
+authService.js:
+- login(email, password): POST /auth/login
+- logout(): limpia localStorage
+- registerUser(data): POST /auth/register
+- getUsuarios(): GET /auth/usuarios
+- toggleUsuario(id): PATCH /auth/usuarios/:id/toggle
+
+appointmentService.js:
+- getAppointmentsByDate(fecha): GET /citas?fecha=
+- createAppointment(data): POST /citas
+- updateAppointment(id, data): PUT /citas/:id
+- cancelAppointment(id): PATCH /citas/:id/cancelar
+- getMyAppointments(): GET /citas/mis-citas
+
+patientService.js:
+- getPatients(): GET /pacientes
+- searchPatients(query): GET /pacientes/buscar?q=
+- createPatient(data): POST /pacientes
+- getPatientById(id): GET /pacientes/:id
+
+doctorService.js:
+- getDoctors(): GET /medicos
+- getDoctorById(id): GET /medicos/:id
+
+
+--------------------------------------------------------------------------------
+4. PENDIENTES PARA ENTREGA FINAL
+--------------------------------------------------------------------------------
+
+4.1 Tecnicos
+--------------
+[ ] HTTPS para el frontend
+    - CloudFront no disponible en AWS Academy
+    - Alternativa: Nginx en EC2 con certificado autofirmado o Let's Encrypt
+    - Impacto: sin HTTPS, Chrome movil bloquea la pagina
+
+[ ] SendGrid configurado
+    - Crear cuenta en sendgrid.com (free tier: 100 correos/dia)
+    - Generar API Key
+    - Agregar SENDGRID_API_KEY al .env del EC2
+    - Reiniciar PM2
+    - Esto activa HU-13: notificacion por correo al agendar cita
+
+[ ] Datos de prueba en base de datos
+    - Insertar medicos de ejemplo
+    - Insertar pacientes de ejemplo
+    - Insertar citas de ejemplo para demo
+
+[ ] pm2 startup para auto-arranque
+    - Ejecutar: pm2 startup
+    - Seguir las instrucciones que genera el comando
+    - Esto hace que PM2 arranque automaticamente si el EC2 se reinicia
+
+4.2 Documentacion requerida para entrega final
+------------------------------------------------
+[ ] Guia de componentes web (este documento cubre parte de ello)
+[ ] Resultados de pruebas (minimo 5 casos de prueba documentados)
+[ ] Especificacion OpenAPI/Swagger de la API
+[ ] README actualizado con instrucciones completas
+
+4.3 Modulos pendientes de implementar
+---------------------------------------
+Segun el backlog original, estos modulos no estan en el MVP pero
+podrian ser necesarios para la entrega final:
+
+[ ] Vista de perfil de paciente con historial de citas
+[ ] Busqueda avanzada de citas (por medico, por paciente, por rango de fechas)
+[ ] Reportes para el director (estadisticas de citas por periodo)
+[ ] Cambio de password para usuarios
+[ ] Subida de foto de medico a S3
+
+
+--------------------------------------------------------------------------------
+5. GUIA DE MANTENIMIENTO Y OPERACION
+--------------------------------------------------------------------------------
+
+5.1 Cuando el lab de AWS Academy se pausa y reinicia
+------------------------------------------------------
+1. Obtener nuevas credenciales:
+   Canvas > Lab > AWS Details > Show
+   Copiar aws_access_key_id, aws_secret_access_key, aws_session_token
+
+2. Configurar credenciales:
+   aws configure set aws_access_key_id <nuevo_key>
+   aws configure set aws_secret_access_key <nuevo_secret>
+   aws configure set aws_session_token <nuevo_token>
+
+3. Verificar que la Elastic IP sigue asociada al EC2:
+   aws ec2 describe-instances --instance-ids i-0c00ea2f3163f4b5a
+   La IP publica debe ser 3.219.251.228
+
+4. Conectarse al EC2 y levantar el backend:
+   ssh -i "labsuser.pem" ec2-user@3.219.251.228
+   pm2 start src/index.js --name medisync-api
+   (desde /home/ec2-user/repo/medisync-backend)
+
+5. Verificar que el backend responde:
+   curl http://3.219.251.228:3000/health
+
+5.2 Como hacer deploy de cambios al frontend
+----------------------------------------------
+1. Hacer cambios en el codigo
+2. Actualizar .env si es necesario
+3. Eliminar build anterior: Remove-Item -Recurse -Force build
+4. Generar nuevo build: npm run build
+5. Subir a S3: aws s3 sync build/ s3://medisync-web-20260501 --delete
+
+5.3 Como hacer deploy de cambios al backend
+---------------------------------------------
+1. Hacer commit y push a GitHub
+2. Conectarse al EC2 por SSH
+3. git pull origin main
+4. pm2 restart medisync-api
+5. Verificar logs: pm2 logs medisync-api --lines 20
+
+5.4 Como agregar un nuevo medico al sistema
+---------------------------------------------
+Opcion A (desde la web):
+1. Iniciar sesion como director (admin@clinicasanangel.com / password)
+2. Ir a Usuarios > Nuevo usuario
+3. Seleccionar rol "Medico"
+4. Llenar nombre, apellido, email, password, especialidad
+5. Guardar
+
+Opcion B (directo en base de datos):
+    PGPASSWORD='MediSync2026!' psql -h medisync-db.ccmbha3tv2ap.us-east-1.rds.amazonaws.com
+                                    -U medisync_admin -d medisync_db
+    INSERT INTO usuarios (nombre, apellido, email, password_hash, rol)
+    VALUES ('Juan', 'Garcia', 'juan@clinica.com', '<hash>', 'medico');
+    INSERT INTO medicos (usuario_id, especialidad) VALUES (<id>, 'Cardiologia');
+
+
+--------------------------------------------------------------------------------
+6. RESUMEN DE RECURSOS AWS
+--------------------------------------------------------------------------------
+
+Recurso             | ID / Valor                                    | Estado
+--------------------|-----------------------------------------------|--------
+EC2 Backend         | i-0c00ea2f3163f4b5a                           | Running
+Elastic IP          | 3.219.251.228                                 | Asociada
+RDS PostgreSQL      | medisync-db.ccmbha3tv2ap.us-east-1.rds...    | Available
+S3 Web              | medisync-web-20260501                         | Activo
+S3 Fotos            | medisync-fotos-20260501                       | Activo
+SG Backend          | sg-0ed1ca6343fd26030                          | Activo
+SG RDS              | sg-03523e4b7907f7c2c                          | Activo
+Key Pair            | vockey                                        | Disponible
+VPC                 | vpc-0b0440f37d5fcc394                         | Default
+Region              | us-east-1                                     | -
+
+URLs del sistema:
+- Frontend: http://medisync-web-20260501.s3-website-us-east-1.amazonaws.com
+- Backend API: http://3.219.251.228:3000/api
+- Health check: http://3.219.251.228:3000/health
+
+Credenciales de base de datos:
+- Host: medisync-db.ccmbha3tv2ap.us-east-1.rds.amazonaws.com
+- Puerto: 5432
+- Base de datos: medisync_db
+- Usuario: medisync_admin
+- Password: MediSync2026!
+
+Credenciales de usuario inicial:
+- Email: admin@clinicasanangel.com
+- Password: password
+- Rol: director
+
+
+--------------------------------------------------------------------------------
+7. REPOSITORIO GITHUB
+--------------------------------------------------------------------------------
+
+URL: https://github.com/HenriqueAlvarado/Proyecto_Final_Equipo3
+
+Estructura del repositorio:
+Proyecto_Final_Equipo3/
+├── medisync-web/           (frontend React)
+├── medisync-backend/       (backend Node.js)
+├── documentacion/          (este directorio)
+│   ├── PARTE1_MVP.txt
+│   └── PARTE2_ENTREGA_FINAL.txt
+└── MediSync_Wireframes.html (wireframes del equipo)
+
+Historial de commits principales:
+1. feat: estructura inicial medisync-web con infraestructura AWS
+2. feat: backend Node.js + Express completo para MVP
+3. feat: registro y gestion de usuarios
+4. fix: CORS abierto para todos los origenes en lab
+
+Ramas: main (unica rama, desarrollo directo)
+
+
+--------------------------------------------------------------------------------
+8. ERRORES ENCONTRADOS EN AVANCES POST-MVP
+--------------------------------------------------------------------------------
+
+ERROR 1: CloudFront no disponible en AWS Academy
+Descripcion: Al intentar crear una distribucion CloudFront para habilitar
+             HTTPS en el frontend, AWS Academy retorna AccessDenied.
+Mensaje: "User is not authorized to perform: cloudfront:CreateDistribution"
+Impacto: El frontend solo sirve HTTP. Chrome movil fuerza HTTPS y bloquea
+         la pagina con ERR_SSL_PROTOCOL_ERROR.
+Solucion temporal: Usar Firefox en movil o escribir http:// explicitamente.
+Solucion permanente pendiente: Configurar Nginx en EC2 con SSL.
+
+ERROR 2: CORS con origin "*" como string no funciona
+Descripcion: Express no acepta el string "*" en la opcion origin de CORS
+             cuando se usa junto con credentials: true.
+Solucion: Usar funcion callback en lugar de string:
+    origin: (origin, callback) => { callback(null, true); }
+
+ERROR 3: Build en cache con IP vieja
+Descripcion: Despues de cambiar REACT_APP_API_URL en .env, el build
+             seguia usando la IP anterior.
+Causa: React Scripts cachea el build anterior.
+Solucion: Eliminar carpeta build/ antes de npm run build.
+
+ERROR 4: Proceso de build reutilizado por controlPwshProcess
+Descripcion: Al usar controlPwshProcess con isReused: true, el proceso
+             retornaba el output del build anterior en lugar del nuevo.
+Solucion: Detener el proceso anterior con action: "stop" y crear uno nuevo,
+          o usar executePwsh sincrono para el build.
+
+
+--------------------------------------------------------------------------------
+9. DECISIONES TECNICAS Y JUSTIFICACIONES
+--------------------------------------------------------------------------------
+
+9.1 Por que React JavaScript y no TypeScript
+---------------------------------------------
+- AWS Academy tiene limitaciones de tiempo y recursos
+- El equipo tiene mas experiencia con JavaScript
+- Para el alcance del proyecto (MVP en dias), TypeScript agregaria overhead
+  sin beneficio significativo
+
+9.2 Por que S3 Static Hosting y no Amplify
+--------------------------------------------
+- Amplify no esta soportado en AWS Academy
+- S3 static hosting es la alternativa directa y soportada
+- Limitacion: solo HTTP, no HTTPS nativo
+
+9.3 Por que JWT y no Cognito
+------------------------------
+- Cognito no esta disponible en AWS Academy
+- JWT con bcrypt es el estandar de la industria para APIs REST
+- Mayor control sobre la implementacion
+
+9.4 Por que SendGrid y no SES
+-------------------------------
+- SES (Simple Email Service) no esta disponible en AWS Academy
+- SendGrid tiene tier gratuito de 100 correos/dia, suficiente para el lab
+- API REST simple de integrar
+
+9.5 Por que PM2 y no systemd o Docker
+---------------------------------------
+- PM2 es el gestor de procesos estandar para Node.js en produccion
+- Mas simple de configurar que systemd para el alcance del proyecto
+- Provee logs, restart automatico y monitoreo basico
+- Docker agregaria complejidad innecesaria para el lab
+
+9.6 Por que PostgreSQL y no MySQL o DynamoDB
+----------------------------------------------
+- PostgreSQL es mas robusto para datos relacionales (citas, medicos, pacientes)
+- DynamoDB (NoSQL) no es adecuado para el modelo de datos relacional del sistema
+- RDS PostgreSQL esta disponible en AWS Academy
+
+
+================================================================================
+FIN DE PARTE 2 - ENTREGA FINAL
+================================================================================
