@@ -14,9 +14,13 @@ const PORT = process.env.PORT || 3000;
 
 // Middlewares
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: (origin, callback) => {
+    // Permitir requests sin origin (Postman, curl) y cualquier origen en lab
+    callback(null, true);
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
