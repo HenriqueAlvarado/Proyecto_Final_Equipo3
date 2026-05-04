@@ -8,6 +8,7 @@ const navItems = [
   { to: '/agenda', label: 'Agenda', icon: '📅', roles: ['recepcionista', 'medico'] },
   { to: '/pacientes', label: 'Pacientes', icon: '👥', roles: ['recepcionista'] },
   { to: '/medicos', label: 'Médicos', icon: '👨‍⚕️', roles: ['recepcionista', 'director'] },
+  { to: '/usuarios', label: 'Usuarios', icon: '🔑', roles: ['director'] },
 ];
 
 const Sidebar = () => {
