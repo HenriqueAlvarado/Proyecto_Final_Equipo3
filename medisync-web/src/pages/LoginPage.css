@@ -1,0 +1,23 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #1a73e8 0%, #1557b0 100%);
+  padding: var(--spacing-lg);
+}
+
+.login-page__card {
+  background-color: var(--color-white);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-2xl);
+  width: 100%;
+  max-width: 440px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+
+.login-page__logo {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+}

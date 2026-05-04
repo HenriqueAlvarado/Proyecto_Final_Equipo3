@@ -1,0 +1,62 @@
+:root {
+  /* Colores primarios */
+  --color-primary: #1a73e8;
+  --color-primary-dark: #1557b0;
+  --color-primary-light: #4a90e2;
+
+  /* Colores secundarios */
+  --color-secondary: #34a853;
+  --color-secondary-dark: #2d8f47;
+
+  /* Colores de estado */
+  --color-danger: #ea4335;
+  --color-warning: #fbbc04;
+  --color-success: #34a853;
+  --color-info: #4285f4;
+
+  /* Neutros */
+  --color-white: #ffffff;
+  --color-gray-100: #f8f9fa;
+  --color-gray-200: #e8eaed;
+  --color-gray-300: #dadce0;
+  --color-gray-400: #bdc1c6;
+  --color-gray-500: #9aa0a6;
+  --color-gray-600: #80868b;
+  --color-gray-700: #5f6368;
+  --color-gray-800: #3c4043;
+  --color-gray-900: #202124;
+  --color-black: #000000;
+
+  /* Tipografía */
+  --font-family: 'Inter', 'Segoe UI', sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+
+  /* Espaciado */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+
+  /* Bordes */
+  --border-radius-sm: 4px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
+  --border-radius-full: 9999px;
+
+  /* Sombras */
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  /* Sidebar */
+  --sidebar-width: 240px;
+  --navbar-height: 64px;
+}
