@@ -82,6 +82,42 @@ Frontend - Nuevos componentes:
 2. MEJORAS DE ARQUITECTURA
 --------------------------------------------------------------------------------
 
+2.0 Login y vista de citas para pacientes
+------------------------------------------
+Descripcion: Los pacientes pueden iniciar sesion con credenciales asignadas
+por la recepcionista y ver sus propias citas.
+
+Flujo completo:
+1. Recepcionista registra al paciente en la pagina de Pacientes
+2. Al registrar, ingresa email y contraseña para el paciente
+3. El sistema muestra las credenciales en pantalla para entregarselas al paciente
+4. El paciente entra a la pagina web, selecciona "Soy paciente"
+5. Ingresa con su email y contraseña
+6. Ve su dashboard y la lista de sus citas (proximas e historial)
+
+Cambios en base de datos:
+- Columna password_hash agregada a tabla pacientes:
+  ALTER TABLE pacientes ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255);
+
+Nuevos endpoints backend:
+  POST /api/auth/login-paciente
+  - No requiere autenticacion previa
+  - Busca en tabla pacientes por email
+  - Verifica password con bcrypt
+  - Retorna JWT con rol 'paciente' e id del paciente
+
+  GET /api/auth/mis-citas
+  - Requiere JWT con rol 'paciente'
+  - Retorna todas las citas del paciente autenticado
+
+Nuevos componentes frontend:
+  - LoginPacienteForm.jsx: formulario de login para pacientes
+  - MisCitasPage.jsx: vista de citas proximas e historial
+  - LoginPage.jsx: ahora tiene tabs "Personal clinico" / "Soy paciente"
+  - PatientForm.jsx: campo de contraseña + pantalla de confirmacion con credenciales
+  - AuthContext.jsx: nueva funcion loginPaciente()
+  - Sidebar.jsx: pacientes ven "Mis citas"
+
 2.1 Configuracion CORS mejorada
 ---------------------------------
 Problema original: CORS configurado con origin: process.env.FRONTEND_URL

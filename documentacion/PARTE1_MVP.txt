@@ -225,12 +225,20 @@ Paleta de colores (variables.css):
 --------------------------------------------------------------------------------
 
 HU-01: Login de recepcionista (web)
-- Pantalla: LoginPage.jsx
+- Pantalla: LoginPage.jsx (tab "Personal clinico")
 - Componente: LoginForm.jsx
 - Servicio: authService.js > login()
 - Endpoint: POST /api/auth/login
 - Validaciones: email formato valido, password requerido
 - Manejo de errores: mensaje de credenciales incorrectas
+
+HU-02 (adaptado): Login de paciente (web)
+- Pantalla: LoginPage.jsx (tab "Soy paciente")
+- Componente: LoginPacienteForm.jsx
+- Servicio: authService.js > loginPaciente()
+- Endpoint: POST /api/auth/login-paciente
+- El paciente usa las credenciales que le asigno la recepcionista
+- Al entrar, ve sus citas en /mis-citas
 
 HU-04: Crear cita (web - recepcionista)
 - Pantalla: AgendaPage.jsx
@@ -269,7 +277,10 @@ HU-15: Registrar nuevo paciente (web - recepcionista)
 - Componente: PatientForm.jsx
 - Servicio: patientService.js > createPatient()
 - Endpoint: POST /api/pacientes
-- Campos: nombre, apellido, email, telefono, fecha_nacimiento, CURP, direccion
+- Campos: nombre, apellido, email, password, telefono, fecha_nacimiento, CURP, direccion
+- Al registrar, muestra las credenciales (email + password) al recepcionista
+  para que se las entregue al paciente
+- El password se guarda como hash bcrypt en la BD
 
 HU-18: Cerrar sesion (web)
 - Componente: Navbar.jsx
@@ -359,11 +370,13 @@ Usuario inicial creado:
 --------------------------------------------------------------------------------
 
 Autenticacion:
-  POST   /api/auth/login              Login, retorna JWT
+  POST   /api/auth/login              Login staff (recepcionista, medico, director), retorna JWT
+  POST   /api/auth/login-paciente     Login paciente, retorna JWT con rol 'paciente'
   POST   /api/auth/logout             Logout (cliente elimina token)
-  POST   /api/auth/register           Crear usuario (solo director)
-  GET    /api/auth/usuarios           Listar usuarios (solo director)
+  POST   /api/auth/register           Crear usuario staff (solo director)
+  GET    /api/auth/usuarios           Listar usuarios staff (solo director)
   PATCH  /api/auth/usuarios/:id/toggle Activar/desactivar usuario (solo director)
+  GET    /api/auth/mis-citas          Citas del paciente autenticado
 
 Citas:
   GET    /api/citas?fecha=YYYY-MM-DD  Citas por fecha
@@ -573,6 +586,8 @@ Infraestructura AWS:
 Pendiente para MVP completo:
 [ ] Configurar SendGrid API Key para envio de correos (HU-13)
 [ ] Datos de prueba en la base de datos
+[x] Login de pacientes con credenciales asignadas por recepcion
+[x] Vista de mis citas para pacientes
 
 
 ================================================================================
