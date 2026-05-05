@@ -282,6 +282,21 @@ HU-15: Registrar nuevo paciente (web - recepcionista)
   para que se las entregue al paciente
 - El password se guarda como hash bcrypt en la BD
 
+HU-16 (adicional): Ver detalle de paciente
+- Componente: PatientList.jsx
+- Al hacer clic en "Ver detalle" se abre un modal con:
+  nombre, correo, telefono, fecha de nacimiento, CURP, direccion
+- No requiere endpoint adicional, usa los datos ya cargados en la lista
+
+HU-17 (adicional): Eliminar paciente
+- Componente: PatientList.jsx
+- Boton "Eliminar" abre modal de confirmacion
+- Servicio: patientService.js > deletePatient()
+- Endpoint: DELETE /api/pacientes/:id
+- Borrado logico (activo = FALSE, no elimina de la BD)
+- Si el paciente tiene citas programadas activas, el sistema bloquea
+  la eliminacion y muestra mensaje explicativo
+
 HU-18: Cerrar sesion (web)
 - Componente: Navbar.jsx
 - Servicio: authService.js > logout()
@@ -386,10 +401,11 @@ Citas:
   GET    /api/citas/mis-citas         Citas del medico autenticado
 
 Pacientes:
-  GET    /api/pacientes               Listar todos
+  GET    /api/pacientes               Listar todos (incluye curp y direccion)
   GET    /api/pacientes/buscar?q=     Buscar por nombre/email/CURP
-  GET    /api/pacientes/:id           Detalle de paciente
-  POST   /api/pacientes               Registrar paciente
+  GET    /api/pacientes/:id           Detalle completo de paciente
+  POST   /api/pacientes               Registrar paciente (con password)
+  DELETE /api/pacientes/:id           Borrado logico (solo recepcionista/director)
 
 Medicos:
   GET    /api/medicos                 Listar todos
@@ -544,26 +560,31 @@ Solucion: Hacer git pull primero para integrar los cambios remotos, luego push.
 --------------------------------------------------------------------------------
 
 Frontend (React en S3):
-[x] Pantalla de login
+[x] Pantalla de login (staff y paciente con tabs)
 [x] Dashboard con estadisticas del dia
 [x] Agenda con selector de fecha
 [x] Crear cita (formulario completo)
 [x] Editar cita
 [x] Cancelar cita (modal de confirmacion)
 [x] Listado de pacientes con busqueda
-[x] Registrar nuevo paciente
+[x] Ver detalle de paciente (modal con CURP y direccion)
+[x] Eliminar paciente (borrado logico con confirmacion)
+[x] Registrar nuevo paciente (con credenciales de acceso)
 [x] Listado de medicos con tarjetas
 [x] Gestion de usuarios (solo director)
+[x] Login de pacientes (tab "Soy paciente")
+[x] Vista de mis citas para pacientes
 [x] Cerrar sesion
 [x] Rutas protegidas por rol
 [x] Sidebar con navegacion por rol
 
 Backend (Node.js en EC2):
-[x] Autenticacion JWT
-[x] Login / Logout
-[x] Registro de usuarios (con transaccion, crea medico si aplica)
+[x] Autenticacion JWT (staff y pacientes)
+[x] Login / Logout staff
+[x] Login pacientes (endpoint separado)
+[x] Registro de usuarios staff (con transaccion)
 [x] CRUD de citas
-[x] CRUD de pacientes
+[x] CRUD de pacientes (con borrado logico)
 [x] Listado de medicos
 [x] Middleware de autenticacion y roles
 [x] Conexion a RDS PostgreSQL con SSL
@@ -588,6 +609,8 @@ Pendiente para MVP completo:
 [ ] Datos de prueba en la base de datos
 [x] Login de pacientes con credenciales asignadas por recepcion
 [x] Vista de mis citas para pacientes
+[x] Ver detalle de paciente (CURP y direccion)
+[x] Eliminar paciente con confirmacion
 
 
 ================================================================================

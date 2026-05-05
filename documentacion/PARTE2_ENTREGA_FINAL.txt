@@ -162,6 +162,53 @@ garantizar consistencia cuando se crea un medico:
 
 Esto evita tener un usuario creado sin su registro de medico correspondiente.
 
+2.4 Correccion de archivo duplicado en pacientes.routes.js
+------------------------------------------------------------
+Problema: El archivo pacientes.routes.js tenia el codigo duplicado con dos
+bloques de rutas y dos llamadas a module.exports. Express solo registraba
+las rutas del primer bloque y el segundo module.exports sobreescribia al
+primero, dejando rutas sin registrar.
+
+Sintoma: El endpoint POST /api/auth/login-paciente retornaba "Ruta no
+encontrada" aunque el codigo estaba correcto, porque el modulo duplicado
+causaba comportamiento inesperado al cargar.
+
+Solucion: Reescritura completa del archivo con un solo bloque de rutas
+y un solo module.exports al final.
+
+2.5 Detalle y eliminacion de pacientes
+----------------------------------------
+Descripcion: La tabla de pacientes ahora tiene funcionalidad completa.
+
+Boton "Ver detalle":
+- Abre un modal con todos los campos: nombre, correo, telefono,
+  fecha de nacimiento, CURP, direccion
+- GET /api/pacientes ahora incluye curp y direccion en la respuesta
+- No requiere llamada adicional al backend
+
+Boton "Eliminar":
+- Abre modal de confirmacion con nombre del paciente
+- Llama a DELETE /api/pacientes/:id
+- Borrado logico: marca activo = FALSE, no elimina el registro de la BD
+- Proteccion: si el paciente tiene citas con estado 'programada',
+  el backend rechaza la eliminacion con mensaje explicativo
+- Solo accesible para roles: recepcionista, director
+- Tras eliminar, la lista se recarga automaticamente
+
+Nuevo endpoint backend:
+  DELETE /api/pacientes/:id
+  - Requiere rol recepcionista o director
+  - Verifica citas activas antes de eliminar (retorna 409 si las hay)
+  - Retorna 404 si el paciente no existe o ya fue eliminado
+  - Retorna datos del paciente eliminado en respuesta exitosa
+
+Nuevos archivos frontend:
+  PatientList.css: estilos de tabla y modales
+  PatientList.jsx: reescrito con modales de detalle y confirmacion de borrado
+
+Nuevo servicio:
+  patientService.js > deletePatient(id): DELETE /api/pacientes/:id
+
 
 --------------------------------------------------------------------------------
 3. DOCUMENTACION DE COMPONENTES WEB
@@ -450,6 +497,41 @@ Descripcion: Al usar controlPwshProcess con isReused: true, el proceso
              retornaba el output del build anterior en lugar del nuevo.
 Solucion: Detener el proceso anterior con action: "stop" y crear uno nuevo,
           o usar executePwsh sincrono para el build.
+
+ERROR 5: Race condition en redirect de paciente tras login
+Descripcion: Al hacer login como paciente, el sistema mostraba "Ruta no
+             encontrada". El LoginPage detectaba el usuario y hacia
+             <Navigate to="/mis-citas">, pero el ProtectedLayout de esa
+             ruta ejecutaba su render antes de que el estado del contexto
+             se actualizara, viendo user como null y redirigiendo a /login,
+             que a su vez detectaba user y volvia a /mis-citas, causando
+             un loop que terminaba en la pagina 404.
+Solucion: Usar useNavigate() directamente en los formularios de login
+          (LoginForm.jsx y LoginPacienteForm.jsx) en lugar de depender
+          del redirect del LoginPage. Asi navigate('/mis-citas') se llama
+          despues de que setUser() ya actualizo el contexto.
+
+ERROR 6: git pull no actualiza archivos en EC2 cuando se ejecuta via SSM
+Descripcion: Al ejecutar "git pull" via SSM (que corre como root), el
+             repositorio pertenece a ec2-user y git no actualiza los
+             archivos correctamente. El backend seguia con el codigo viejo
+             aunque git pull reportaba "Already up to date".
+Causa: SSM corre comandos como root. El repositorio fue clonado por
+       ec2-user. Git pull como root no tiene permisos para modificar
+       los archivos del repo de ec2-user.
+Solucion: Usar "su - ec2-user -c 'git fetch origin && git reset --hard
+          origin/main'" para ejecutar git como el usuario correcto.
+
+ERROR 7: Codigo duplicado en pacientes.routes.js causa rutas no encontradas
+Descripcion: El archivo pacientes.routes.js tenia dos bloques completos
+             de rutas y dos llamadas a module.exports. El segundo
+             module.exports sobreescribia al primero con un objeto vacio,
+             haciendo que Express no registrara ninguna ruta del modulo.
+Sintoma: Todos los endpoints de /api/pacientes y /api/auth/login-paciente
+         retornaban "Ruta no encontrada".
+Causa: Al agregar nuevas rutas, se pego el codigo al final del archivo
+       sin eliminar el module.exports anterior.
+Solucion: Reescritura completa del archivo con estructura limpia.
 
 
 --------------------------------------------------------------------------------
