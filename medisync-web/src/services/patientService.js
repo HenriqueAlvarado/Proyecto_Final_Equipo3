@@ -19,3 +19,8 @@ export const getPatientById = async (id) => {
   const response = await api.get(`/pacientes/${id}`);
   return response.data;
 };
+
+export const deletePatient = async (id) => {
+  const response = await api.delete(`/pacientes/${id}`);
+  return response.data;
+};

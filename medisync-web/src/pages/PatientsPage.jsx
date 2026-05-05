@@ -49,7 +49,7 @@ const PatientsPage = () => {
 
       <Card>
         <PatientSearch onSearch={handleSearch} />
-        {loading ? <p>Cargando pacientes...</p> : <PatientList patients={patients} onSelect={() => {}} />}
+        {loading ? <p>Cargando pacientes...</p> : <PatientList patients={patients} onDeleted={() => setRefreshKey(k => k + 1)} />}
       </Card>
     </div>
   );
