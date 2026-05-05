@@ -1,0 +1,65 @@
+.patient-form__credentials {
+  text-align: center;
+  padding: var(--spacing-lg);
+}
+
+.patient-form__credentials-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md);
+}
+
+.patient-form__credentials h2 {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  margin-bottom: var(--spacing-sm);
+  color: var(--color-gray-900);
+}
+
+.patient-form__credentials p {
+  color: var(--color-gray-600);
+  margin-bottom: var(--spacing-md);
+}
+
+.patient-form__credentials-box {
+  background-color: #e8f0fe;
+  border: 2px solid var(--color-primary);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-lg);
+  margin: var(--spacing-lg) auto;
+  max-width: 400px;
+  text-align: left;
+}
+
+.patient-form__credential-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+}
+
+.patient-form__credential-item:last-child {
+  margin-bottom: 0;
+}
+
+.patient-form__credential-label {
+  font-weight: 600;
+  color: var(--color-gray-700);
+  min-width: 90px;
+}
+
+.patient-form__credential-value {
+  font-family: monospace;
+  font-size: var(--font-size-lg);
+  color: var(--color-primary);
+  font-weight: 600;
+  background-color: white;
+  padding: 4px 10px;
+  border-radius: var(--border-radius-sm);
+}
+
+.patient-form__credentials-note {
+  font-size: var(--font-size-sm);
+  color: var(--color-gray-500);
+  font-style: italic;
+  margin-bottom: var(--spacing-lg) !important;
+}

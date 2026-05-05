@@ -69,6 +69,80 @@ router.post('/register', authMiddleware, requireRole('director'), async (req, re
   }
 });
 
+// POST /api/auth/login-paciente — Login exclusivo para pacientes
+router.post('/login-paciente', async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email y contraseña son requeridos' });
+  }
+
+  try {
+    const result = await pool.query(
+      'SELECT id, nombre, apellido, email, password_hash FROM pacientes WHERE email = $1 AND activo = TRUE',
+      [email.toLowerCase().trim()]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(401).json({ message: 'Credenciales incorrectas' });
+    }
+
+    const paciente = result.rows[0];
+
+    if (!paciente.password_hash) {
+      return res.status(401).json({ message: 'Esta cuenta no tiene acceso habilitado. Contacta a recepción.' });
+    }
+
+    const validPassword = await bcrypt.compare(password, paciente.password_hash);
+    if (!validPassword) {
+      return res.status(401).json({ message: 'Credenciales incorrectas' });
+    }
+
+    const token = jwt.sign(
+      { id: paciente.id, email: paciente.email, rol: 'paciente', nombre: paciente.nombre },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN || '8h' }
+    );
+
+    res.json({
+      token,
+      user: {
+        id: paciente.id,
+        nombre: paciente.nombre,
+        apellido: paciente.apellido,
+        email: paciente.email,
+        rol: 'paciente',
+      },
+    });
+  } catch (err) {
+    console.error('Error en login paciente:', err);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+});
+
+// GET /api/auth/mis-citas — Citas del paciente autenticado
+router.get('/mis-citas', authMiddleware, async (req, res) => {
+  if (req.user.rol !== 'paciente') {
+    return res.status(403).json({ message: 'Solo disponible para pacientes' });
+  }
+  try {
+    const result = await pool.query(
+      `SELECT c.id, c.fecha, c.hora, c.motivo, c.estado, c.notas,
+              u.nombre || ' ' || u.apellido AS medico_nombre,
+              m.especialidad
+       FROM citas c
+       JOIN medicos m ON c.medico_id = m.id
+       JOIN usuarios u ON m.usuario_id = u.id
+       WHERE c.paciente_id = $1
+       ORDER BY c.fecha DESC, c.hora ASC`,
+      [req.user.id]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ message: 'Error al obtener citas' });
+  }
+});
+
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;

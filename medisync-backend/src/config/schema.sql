@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS pacientes (
   nombre VARCHAR(100) NOT NULL,
   apellido VARCHAR(100) NOT NULL,
   email VARCHAR(150) UNIQUE,
+  password_hash VARCHAR(255),
   telefono VARCHAR(20),
   fecha_nacimiento DATE,
   curp VARCHAR(18) UNIQUE,

@@ -24,13 +24,21 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   };
 
+  const loginPaciente = async (email, password) => {
+    const data = await authService.loginPaciente(email, password);
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    setUser(data.user);
+    return data.user;
+  };
+
   const logout = () => {
     authService.logout();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, loading }}>
+    <AuthContext.Provider value={{ user, login, loginPaciente, logout, loading }}>
       {children}
     </AuthContext.Provider>
   );

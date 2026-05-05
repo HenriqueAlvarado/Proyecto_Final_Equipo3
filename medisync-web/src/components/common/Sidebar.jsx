@@ -9,6 +9,7 @@ const navItems = [
   { to: '/pacientes', label: 'Pacientes', icon: '👥', roles: ['recepcionista'] },
   { to: '/medicos', label: 'Médicos', icon: '👨‍⚕️', roles: ['recepcionista', 'director'] },
   { to: '/usuarios', label: 'Usuarios', icon: '🔑', roles: ['director'] },
+  { to: '/mis-citas', label: 'Mis citas', icon: '🗓️', roles: ['paciente'] },
 ];
 
 const Sidebar = () => {

@@ -10,6 +10,7 @@ import AgendaPage from './pages/AgendaPage';
 import PatientsPage from './pages/PatientsPage';
 import DoctorsPage from './pages/DoctorsPage';
 import UsersPage from './pages/UsersPage';
+import MisCitasPage from './pages/MisCitasPage';
 import NotFoundPage from './pages/NotFoundPage';
 import './assets/styles/global.css';
 
@@ -37,6 +38,7 @@ const AppRoutes = () => (
     <Route path="/pacientes" element={<ProtectedLayout><PatientsPage /></ProtectedLayout>} />
     <Route path="/medicos" element={<ProtectedLayout><DoctorsPage /></ProtectedLayout>} />
     <Route path="/usuarios" element={<ProtectedLayout><UsersPage /></ProtectedLayout>} />
+    <Route path="/mis-citas" element={<ProtectedLayout><MisCitasPage /></ProtectedLayout>} />
     <Route path="/" element={<Navigate to="/dashboard" replace />} />
     <Route path="*" element={<NotFoundPage />} />
   </Routes>

@@ -21,3 +21,32 @@
   font-size: 3rem;
   margin-bottom: var(--spacing-md);
 }
+
+.login-page__tabs {
+  display: flex;
+  border-bottom: 2px solid var(--color-gray-200);
+  margin-bottom: var(--spacing-lg);
+}
+
+.login-page__tab {
+  flex: 1;
+  padding: 10px;
+  background: none;
+  border: none;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-gray-500);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.login-page__tab:hover {
+  color: var(--color-primary);
+}
+
+.login-page__tab--active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
