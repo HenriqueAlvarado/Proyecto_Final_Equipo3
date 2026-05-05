@@ -1,0 +1,1325 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>MediSync — Wireframes Paciente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --surface:#ffffff;
+    --surface-2:#fafbfc;
+    --surface-3:#f0f2f5;
+    --line:#e3e6eb;
+    --line-2:#d4d8df;
+    --line-strong:#b6bcc6;
+    --ink:#111418;
+    --ink-2:#3a3f47;
+    --ink-3:#6b7280;
+    --ink-4:#9aa1ad;
+    --accent:#1f6feb;
+    --accent-soft:#e8f0fd;
+    --accent-line:#c5d8f7;
+    --ok:#137a3d;
+    --ok-bg:#e6f3ec;
+    --warn:#8a5a00;
+    --warn-bg:#fbf1d9;
+    --bad:#a4262c;
+    --bad-bg:#fae9ea;
+    --sans:'Inter', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --r-sm:4px;
+    --r-md:6px;
+    --r-lg:8px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans); -webkit-font-smoothing:antialiased}
+  body{padding:48px 0 96px}
+
+  .doc-head{
+    width:1280px; margin:0 auto 40px; padding:0 4px;
+    display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
+  }
+  .doc-eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-3); margin:0 0 8px;
+  }
+  .doc-title{
+    font-family:var(--sans); font-weight:600; font-size:28px; line-height:1.15;
+    margin:0; letter-spacing:-.01em;
+  }
+  .doc-sub{
+    margin:8px 0 0; max-width:760px;
+    font-size:14px; line-height:1.55; color:var(--ink-3);
+  }
+  .doc-meta{
+    font-family:var(--mono); font-size:11px; color:var(--ink-3); text-align:right; line-height:1.7;
+  }
+  .doc-meta b{color:var(--ink); font-weight:500}
+
+  .screen-wrap{ width:1280px; margin:0 auto 56px; }
+  .screen-label{ display:flex; align-items:center; gap:14px; margin:0 0 14px; padding:0 2px; }
+  .screen-num{ font-family:var(--mono); font-size:11px; font-weight:500; color:var(--ink-3); letter-spacing:.06em; }
+  .screen-name{ font-family:var(--sans); font-weight:600; font-size:16px; margin:0; line-height:1; color:var(--ink); letter-spacing:-.005em; }
+  .screen-tag{
+    font-family:var(--mono); font-size:11px; color:var(--ink-3);
+    margin-left:auto; border:1px solid var(--line); padding:3px 8px; border-radius:99px; background:var(--surface);
+  }
+  .screen-rule{ height:1px; background:var(--line); margin:0 0 12px; }
+
+  .screen{
+    width:1280px; min-height:800px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--r-lg);
+    box-shadow:0 1px 0 rgba(17,20,24,.02), 0 8px 24px -16px rgba(17,20,24,.08);
+    position:relative; overflow:hidden;
+  }
+
+  .card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md); }
+  .label{
+    font-family:var(--mono); font-size:10px; font-weight:500;
+    color:var(--ink-3); text-transform:uppercase; letter-spacing:.08em;
+    margin-bottom:6px; display:block;
+  }
+  .input{
+    border:1px solid var(--line-2); border-radius:var(--r-sm);
+    background:var(--surface);
+    padding:9px 12px;
+    font-family:var(--sans); font-size:14px; color:var(--ink);
+    display:flex; align-items:center; gap:8px;
+    height:38px;
+  }
+  .input .ph{color:var(--ink-4)}
+  .input .end{margin-left:auto; color:var(--ink-3); font-size:12px}
+
+  .btn{
+    border:1px solid var(--line-2); border-radius:var(--r-sm);
+    padding:0 14px; height:36px; background:var(--surface);
+    font-family:var(--sans); font-size:13px; font-weight:500; color:var(--ink);
+    display:inline-flex; align-items:center; gap:6px; cursor:default;
+  }
+  .btn.primary{ background:var(--accent); color:#fff; border-color:var(--accent); }
+  .btn.ghost{background:transparent; border-color:transparent}
+  .btn.sm{height:30px; padding:0 10px; font-size:12px}
+  .btn.icon{width:32px; padding:0; justify-content:center}
+  .btn.danger-ghost{color:var(--bad); border-color:var(--line-2)}
+
+  .pill{
+    display:inline-flex; align-items:center; gap:6px;
+    border:1px solid var(--line-2); border-radius:99px;
+    padding:2px 8px; background:var(--surface);
+    font-family:var(--sans); font-size:11px; line-height:1.6; font-weight:500;
+    color:var(--ink-2);
+  }
+
+  .badge{
+    display:inline-flex; align-items:center; gap:6px;
+    font-family:var(--sans); font-size:12px; font-weight:500; line-height:1;
+    padding:4px 8px; border-radius:var(--r-sm);
+    border:1px solid transparent;
+  }
+  .badge::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
+  .badge.ok{ color:var(--ok); background:var(--ok-bg); border-color:rgba(19,122,61,.18); }
+  .badge.warn{ color:var(--warn); background:var(--warn-bg); border-color:rgba(138,90,0,.18); }
+  .badge.bad{ color:var(--bad); background:var(--bad-bg); border-color:rgba(164,38,44,.18); }
+  .badge.neutral{ color:var(--ink-3); background:var(--surface-3); border-color:var(--line); }
+  .badge.accent{ color:var(--accent); background:var(--accent-soft); border-color:var(--accent-line); }
+
+  /* sidebar / app shell — ahora con rol Paciente */
+  .app{display:grid; grid-template-columns:228px 1fr;}
+  .sidebar{
+    border-right:1px solid var(--line);
+    background:var(--surface-2);
+    padding:18px 14px; display:flex; flex-direction:column; gap:2px;
+  }
+  .logo{
+    display:flex; align-items:center; gap:10px;
+    padding:6px 8px 16px; margin-bottom:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .logo-mark{
+    width:30px; height:30px; border-radius:var(--r-sm);
+    background:var(--ink); display:grid; place-items:center;
+    color:#fff; font-weight:600; font-size:13px; letter-spacing:-.02em;
+  }
+  .logo-name{ font-family:var(--sans); font-size:14px; font-weight:600; line-height:1.1; letter-spacing:-.01em; }
+  .logo-name small{ display:block; font-family:var(--mono); font-size:9px; font-weight:500; color:var(--ink-3); letter-spacing:.16em; margin-top:3px; text-transform:uppercase; }
+
+  .nav-section{
+    font-family:var(--mono); font-size:10px; font-weight:500;
+    color:var(--ink-4); text-transform:uppercase; letter-spacing:.1em;
+    padding:14px 8px 6px;
+  }
+  .nav-item{
+    display:flex; align-items:center; gap:10px;
+    padding:7px 8px; border-radius:var(--r-sm);
+    font-family:var(--sans); font-size:13px; color:var(--ink-2);
+  }
+  .nav-item .ico{ width:14px; height:14px; border:1.25px solid var(--ink-3); border-radius:3px; display:inline-block; flex:none; }
+  .nav-item .count{ margin-left:auto; font-family:var(--mono); font-size:10px; color:var(--ink-3); }
+  .nav-item.active{
+    background:var(--surface); color:var(--ink); font-weight:500;
+    box-shadow:inset 0 0 0 1px var(--line);
+  }
+  .nav-item.active .ico{ background:var(--ink); border-color:var(--ink); }
+  .nav-spacer{flex:1}
+
+  .user-card{
+    border-top:1px solid var(--line); padding-top:12px; margin-top:12px;
+    display:flex; align-items:center; gap:10px;
+    font-family:var(--sans); font-size:13px;
+  }
+  .avatar{
+    width:30px; height:30px; border-radius:50%;
+    background:var(--surface-3); border:1px solid var(--line);
+    display:grid; place-items:center;
+    font-family:var(--sans); font-weight:600; font-size:11px; color:var(--ink-2);
+  }
+  .user-card .nm{font-weight:500; color:var(--ink); line-height:1.2}
+  .user-card small{font-family:var(--mono); font-size:9px; color:var(--ink-3); display:block; letter-spacing:.1em; text-transform:uppercase; margin-top:2px}
+
+  .topbar{
+    height:56px; border-bottom:1px solid var(--line);
+    display:flex; align-items:center; gap:14px;
+    padding:0 24px; background:var(--surface);
+  }
+  .topbar h2{margin:0; font-size:16px; font-weight:600; line-height:1; letter-spacing:-.005em}
+  .topbar .crumb{font-family:var(--mono); font-size:11px; color:var(--ink-3)}
+  .topbar .spacer{flex:1}
+  .topbar .userchip{
+    display:flex; align-items:center; gap:8px;
+    padding-left:8px; border-left:1px solid var(--line);
+  }
+  .topbar .userchip .nm{font-size:13px; font-weight:500}
+
+  .content{ padding:22px 24px; }
+  .page-head{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    margin-bottom:18px;
+  }
+  .page-head h1{ margin:0; font-weight:600; font-size:22px; line-height:1.2; letter-spacing:-.01em; }
+  .page-head .sub{font-size:13px; color:var(--ink-3); margin-top:4px}
+
+  /* ===== Login paciente (variante) ===== */
+  .login{ width:1280px; height:800px; display:grid; grid-template-columns:1fr 520px; }
+  .login-left{
+    background:var(--surface-2); border-right:1px solid var(--line);
+    padding:48px;
+    display:flex; flex-direction:column; justify-content:space-between;
+    position:relative;
+  }
+  .login-left::after{
+    content:""; position:absolute; inset:0;
+    background-image:
+      linear-gradient(to right, rgba(17,20,24,.025) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(17,20,24,.025) 1px, transparent 1px);
+    background-size:32px 32px; pointer-events:none;
+  }
+  .login-left > *{position:relative; z-index:1}
+  .login-brand{display:flex; align-items:center; gap:12px}
+  .login-brand .logo-mark{width:36px; height:36px; font-size:14px}
+  .login-brand .logo-name{font-size:16px}
+  .login-headline{
+    font-family:var(--sans); font-weight:600; font-size:34px; line-height:1.15;
+    letter-spacing:-.02em; max-width:480px;
+  }
+  .login-foot{
+    display:flex; gap:24px; font-family:var(--mono); font-size:11px; color:var(--ink-3);
+  }
+  .login-foot b{color:var(--ink); font-weight:500}
+  .login-right{ padding:48px 56px; display:flex; flex-direction:column; justify-content:center; }
+  .login-card-head h2{ margin:0 0 6px; font-weight:600; font-size:22px; letter-spacing:-.01em; }
+  .login-card-head p{margin:0; font-size:13px; color:var(--ink-3)}
+  .field{margin-bottom:14px}
+  .field-row{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px}
+  .field-row .lnk{font-size:12px; color:var(--accent); font-weight:500}
+  .login-actions{margin-top:14px; display:flex; flex-direction:column; gap:10px}
+  .login-fine{
+    margin-top:24px; padding-top:20px; border-top:1px solid var(--line);
+    font-size:12px; color:var(--ink-3); display:flex; justify-content:space-between;
+  }
+  .divider{
+    display:flex; align-items:center; gap:10px; color:var(--ink-3);
+    font-size:11px; font-family:var(--mono); letter-spacing:.1em; text-transform:uppercase;
+    margin:18px 0 10px;
+  }
+  .divider::before, .divider::after{content:""; flex:1; height:1px; background:var(--line)}
+
+  /* ===== Dashboard paciente ===== */
+  .hero-card{
+    background:linear-gradient(180deg, var(--accent-soft) 0%, #fff 100%);
+    border:1px solid var(--accent-line);
+    border-radius:var(--r-md);
+    padding:22px 24px;
+    margin-bottom:18px;
+    display:grid; grid-template-columns:1fr auto; gap:20px; align-items:center;
+  }
+  .hero-card h2{margin:0 0 4px; font-size:20px; font-weight:600; letter-spacing:-.01em}
+  .hero-card .meta{font-size:13px; color:var(--ink-2); line-height:1.55}
+  .hero-card .meta b{color:var(--ink); font-weight:600}
+  .hero-actions{display:flex; gap:8px; flex-direction:column; align-items:flex-end}
+  .hero-actions .when{font-family:var(--mono); font-size:11px; color:var(--ink-3); margin-bottom:4px}
+
+  .twocol{display:grid; grid-template-columns:1.45fr 1fr; gap:16px}
+  .panel-head{
+    display:flex; align-items:center; gap:8px;
+    padding:14px 16px; border-bottom:1px solid var(--line);
+  }
+  .panel-head h3{margin:0; font-size:14px; font-weight:600; letter-spacing:-.005em}
+  .panel-head .more{margin-left:auto; font-family:var(--mono); font-size:11px; color:var(--ink-3)}
+
+  .stat-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:18px}
+  .stat{ padding:16px; min-height:104px; display:flex; flex-direction:column; }
+  .stat .lab{ font-family:var(--mono); font-size:10px; color:var(--ink-3); letter-spacing:.08em; text-transform:uppercase; font-weight:500; }
+  .stat .num{font-size:28px; font-weight:600; line-height:1.1; margin-top:10px; letter-spacing:-.015em}
+  .stat .delta{font-size:12px; color:var(--ink-3); margin-top:auto; padding-top:10px}
+
+  .appt-row{
+    display:grid; grid-template-columns:80px 1fr 150px 110px 30px;
+    gap:12px; align-items:center;
+    padding:12px 16px;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+  .appt-row:last-child{border-bottom:none}
+  .appt-row .time{font-family:var(--mono); font-size:13px; font-weight:500; color:var(--ink); line-height:1.3}
+  .appt-row .time small{display:block; font-family:var(--mono); font-size:10px; font-weight:400; color:var(--ink-3); margin-top:2px; letter-spacing:.04em; text-transform:uppercase}
+  .appt-row .pat{font-weight:500; color:var(--ink)}
+  .appt-row .pat small{display:block; font-family:var(--sans); font-size:12px; font-weight:400; color:var(--ink-3); margin-top:2px}
+  .appt-row .doc{color:var(--ink-2)}
+  .appt-row .more-icon{color:var(--ink-3); font-size:14px; text-align:center}
+
+  .quick-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:16px}
+  .quick{
+    border:1px solid var(--line); border-radius:var(--r-sm);
+    padding:14px; display:flex; flex-direction:column; gap:6px;
+    background:var(--surface);
+  }
+  .quick .q-ico{
+    width:28px; height:28px; border-radius:var(--r-sm);
+    background:var(--surface-3); border:1px solid var(--line);
+    display:grid; place-items:center; font-size:14px; font-weight:500; color:var(--ink-2);
+    margin-bottom:4px;
+  }
+  .quick .q-ico.accent{ background:var(--accent-soft); border-color:var(--accent-line); color:var(--accent) }
+  .quick .q-tit{font-size:13px; font-weight:600; color:var(--ink)}
+  .quick .q-sub{font-family:var(--mono); font-size:10px; color:var(--ink-3); letter-spacing:.05em}
+
+  .note-block{
+    padding:14px 16px;
+    background:var(--accent-soft);
+    border:1px solid var(--accent-line);
+    border-radius:var(--r-sm);
+    margin:0 16px 16px;
+    display:flex; gap:10px; align-items:flex-start;
+  }
+  .note-block .dot{ width:6px; height:6px; border-radius:50%; background:var(--accent); flex:none; margin-top:7px; }
+  .note-block p{margin:0; font-size:13px; color:var(--ink-2); line-height:1.5}
+  .note-block p b{color:var(--ink); font-weight:600}
+
+  /* ===== Agendar cita (wizard) ===== */
+  .stepper{
+    display:flex; gap:0; margin-bottom:20px;
+    border:1px solid var(--line); border-radius:var(--r-md);
+    background:var(--surface); overflow:hidden;
+  }
+  .step{
+    flex:1; padding:14px 18px;
+    display:flex; align-items:center; gap:10px;
+    border-right:1px solid var(--line);
+    font-size:13px; color:var(--ink-3);
+  }
+  .step:last-child{border-right:none}
+  .step .n{
+    width:22px; height:22px; border-radius:50%;
+    border:1px solid var(--line-2); background:var(--surface);
+    display:grid; place-items:center;
+    font-family:var(--mono); font-size:11px; font-weight:500;
+    color:var(--ink-3);
+  }
+  .step.cur{background:var(--accent-soft); color:var(--ink)}
+  .step.cur .n{background:var(--accent); border-color:var(--accent); color:#fff}
+  .step.done{color:var(--ink-2)}
+  .step.done .n{background:var(--ok); border-color:var(--ok); color:#fff}
+  .step .lbl{font-weight:500}
+  .step .lbl small{display:block; font-family:var(--mono); font-size:10px; font-weight:400; color:var(--ink-3); letter-spacing:.05em; text-transform:uppercase; margin-top:2px}
+
+  .specialty-grid{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+  .spec-card{
+    border:1px solid var(--line-2); border-radius:var(--r-md);
+    padding:18px;
+    background:var(--surface);
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .spec-card.sel{border-color:var(--accent); background:var(--accent-soft); box-shadow:0 0 0 3px rgba(31,111,235,.08)}
+  .spec-card .ico{
+    width:36px; height:36px; border-radius:var(--r-sm);
+    background:var(--surface-3); border:1px solid var(--line);
+    display:grid; place-items:center; font-size:16px; color:var(--ink-2);
+    margin-bottom:6px;
+  }
+  .spec-card.sel .ico{background:var(--accent); border-color:var(--accent); color:#fff}
+  .spec-card h4{margin:0; font-size:14px; font-weight:600}
+  .spec-card p{margin:0; font-size:12px; color:var(--ink-3); line-height:1.5}
+  .spec-card .meta{margin-top:8px; font-family:var(--mono); font-size:10px; color:var(--ink-3); letter-spacing:.04em; text-transform:uppercase}
+
+  .doctor-list{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+  .doctor-card{
+    border:1px solid var(--line); border-radius:var(--r-md);
+    padding:14px; display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center;
+    background:var(--surface);
+  }
+  .doctor-card .av{
+    width:42px; height:42px; border-radius:50%;
+    background:var(--surface-3); border:1px solid var(--line);
+    display:grid; place-items:center; font-weight:600; font-size:13px; color:var(--ink-2);
+  }
+  .doctor-card.sel{border-color:var(--accent); background:var(--accent-soft)}
+  .doctor-card.sel .av{background:var(--accent); border-color:var(--accent); color:#fff}
+  .doctor-card .nm{font-size:14px; font-weight:600; color:var(--ink)}
+  .doctor-card .meta{font-size:12px; color:var(--ink-3); margin-top:2px; line-height:1.45}
+
+  .calendar{
+    display:grid; grid-template-columns:repeat(7, 1fr); gap:6px;
+    margin-top:8px;
+  }
+  .calendar .dn{
+    text-align:center; font-family:var(--mono); font-size:10px; letter-spacing:.06em;
+    color:var(--ink-3); text-transform:uppercase; padding:6px 0;
+  }
+  .calendar .d{
+    aspect-ratio:1.2/1;
+    border:1px solid var(--line-2); border-radius:var(--r-sm);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:var(--surface); font-family:var(--sans);
+    gap:2px;
+  }
+  .calendar .d .num{font-size:14px; font-weight:500; color:var(--ink)}
+  .calendar .d .av{font-family:var(--mono); font-size:9px; color:var(--ink-3); letter-spacing:.04em; text-transform:uppercase}
+  .calendar .d.empty{background:var(--surface-2); border-style:dashed; border-color:var(--line)}
+  .calendar .d.empty .num{color:var(--ink-4)}
+  .calendar .d.full{background:var(--surface-3)}
+  .calendar .d.full .num{color:var(--ink-4); text-decoration:line-through}
+  .calendar .d.full .av{color:var(--bad)}
+  .calendar .d.sel{background:var(--accent); border-color:var(--accent)}
+  .calendar .d.sel .num, .calendar .d.sel .av{color:#fff}
+  .calendar .d.today{box-shadow:inset 0 0 0 1px var(--accent)}
+
+  .slot-grid{ display:grid; grid-template-columns:repeat(6, 1fr); gap:6px; }
+  .slot{
+    border:1px solid var(--line-2); border-radius:var(--r-sm); padding:8px 0;
+    text-align:center; font-family:var(--mono); font-size:12px; color:var(--ink-2);
+    background:var(--surface);
+  }
+  .slot.taken{ background:var(--surface-3); color:var(--ink-4); text-decoration:line-through; border-color:var(--line); }
+  .slot.sel{ background:var(--accent); color:#fff; border-color:var(--accent); }
+
+  .summary-box{
+    padding:14px;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:var(--r-sm);
+  }
+  .summary-row{
+    display:grid; grid-template-columns:120px 1fr;
+    gap:10px; padding:8px 0; font-size:13px;
+    border-bottom:1px dashed var(--line);
+  }
+  .summary-row:last-child{border-bottom:none}
+  .summary-row .k{font-family:var(--mono); font-size:11px; color:var(--ink-3); letter-spacing:.06em; text-transform:uppercase; padding-top:1px}
+  .summary-row .v{color:var(--ink); font-weight:500}
+
+  /* ===== Mis citas ===== */
+  .tabs{
+    display:flex; gap:0; border-bottom:1px solid var(--line);
+    margin-bottom:16px;
+  }
+  .tab{
+    padding:12px 16px; font-size:13px; font-weight:500; color:var(--ink-3);
+    border-bottom:2px solid transparent; margin-bottom:-1px;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .tab.cur{color:var(--ink); border-color:var(--accent)}
+  .tab .ct{font-family:var(--mono); font-size:11px; color:var(--ink-3); padding:1px 6px; border:1px solid var(--line); border-radius:99px; background:var(--surface)}
+  .tab.cur .ct{color:var(--accent); border-color:var(--accent-line); background:var(--accent-soft)}
+
+  .appt-card{
+    display:grid; grid-template-columns:80px 1fr auto;
+    gap:18px; align-items:center;
+    padding:16px 18px;
+    border:1px solid var(--line); border-radius:var(--r-md);
+    background:var(--surface); margin-bottom:10px;
+  }
+  .appt-card .date{
+    text-align:center; padding-right:18px; border-right:1px solid var(--line);
+  }
+  .appt-card .date .day{font-family:var(--sans); font-size:24px; font-weight:600; line-height:1; letter-spacing:-.01em}
+  .appt-card .date .mo{font-family:var(--mono); font-size:10px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.1em; margin-top:4px}
+  .appt-card .date .time{font-family:var(--mono); font-size:11px; color:var(--ink-2); margin-top:6px}
+  .appt-card .info .doc{font-size:14px; font-weight:600; color:var(--ink)}
+  .appt-card .info .spec{font-size:12px; color:var(--ink-3); margin-top:2px}
+  .appt-card .info .meta{margin-top:8px; display:flex; gap:14px; font-family:var(--mono); font-size:11px; color:var(--ink-3)}
+  .appt-card .info .meta b{color:var(--ink-2); font-weight:500}
+  .appt-card .actions{display:flex; gap:6px; align-items:center}
+
+  /* ===== Expediente ===== */
+  .profile-grid{display:grid; grid-template-columns:280px 1fr; gap:16px}
+  .profile-card{padding:20px}
+  .profile-av{
+    width:80px; height:80px; border-radius:50%;
+    background:var(--surface-3); border:1px solid var(--line);
+    display:grid; place-items:center;
+    font-size:24px; font-weight:600; color:var(--ink-2);
+    margin-bottom:14px;
+  }
+  .profile-card h3{margin:0; font-size:18px; font-weight:600; letter-spacing:-.01em}
+  .profile-card .exp{font-family:var(--mono); font-size:11px; color:var(--ink-3); letter-spacing:.06em; margin-top:4px; text-transform:uppercase}
+  .profile-fields{margin-top:18px; padding-top:18px; border-top:1px solid var(--line); display:flex; flex-direction:column; gap:14px}
+  .profile-field .k{font-family:var(--mono); font-size:10px; color:var(--ink-3); letter-spacing:.08em; text-transform:uppercase; margin-bottom:4px}
+  .profile-field .v{font-size:13px; color:var(--ink); font-weight:500}
+
+  .info-grid{display:grid; grid-template-columns:1fr 1fr; gap:16px}
+  .info-card-section{padding:16px 18px}
+  .info-card-section + .info-card-section{border-top:1px solid var(--line)}
+  .info-card-section h4{margin:0 0 12px; font-size:13px; font-weight:600}
+  .kv{display:grid; grid-template-columns:140px 1fr; gap:10px; padding:6px 0; font-size:13px}
+  .kv .k{font-family:var(--mono); font-size:11px; color:var(--ink-3); letter-spacing:.06em; text-transform:uppercase; padding-top:1px}
+  .kv .v{color:var(--ink-2)}
+
+  .timeline{display:flex; flex-direction:column}
+  .tl-row{
+    display:grid; grid-template-columns:90px 24px 1fr; gap:14px;
+    padding:14px 0;
+    position:relative;
+  }
+  .tl-row + .tl-row{border-top:1px solid var(--line)}
+  .tl-date{font-family:var(--mono); font-size:11px; color:var(--ink-3); text-transform:uppercase; letter-spacing:.06em; padding-top:2px}
+  .tl-marker{
+    width:14px; height:14px; border-radius:50%;
+    background:var(--surface); border:2px solid var(--accent);
+    margin:2px auto 0; position:relative;
+  }
+  .tl-row.done .tl-marker{background:var(--accent); border-color:var(--accent)}
+  .tl-content .ttl{font-size:13px; font-weight:600; color:var(--ink)}
+  .tl-content .meta{font-size:12px; color:var(--ink-3); margin-top:2px}
+  .tl-content .desc{font-size:13px; color:var(--ink-2); margin-top:6px; line-height:1.55}
+
+  /* receta */
+  .rx{
+    border:1px solid var(--line); border-radius:var(--r-md);
+    padding:14px 16px; margin-top:8px; background:var(--surface-2);
+  }
+  .rx h5{margin:0 0 8px; font-size:12px; font-family:var(--mono); letter-spacing:.06em; text-transform:uppercase; color:var(--ink-3); font-weight:500}
+  .rx ul{margin:0; padding-left:18px; font-size:13px; color:var(--ink-2); line-height:1.6}
+  .rx ul li b{color:var(--ink); font-weight:500}
+
+  /* footer */
+  .doc-foot{
+    width:1280px; margin:60px auto 0;
+    border-top:1px solid var(--line); padding-top:14px;
+    display:flex; justify-content:space-between;
+    font-family:var(--mono); font-size:11px; color:var(--ink-3);
+  }
+</style>
+</head>
+<body>
+
+<header class="doc-head">
+  <div>
+    <p class="doc-eyebrow">PROYECTO · MEDISYNC · WIREFRAMES PACIENTE</p>
+    <h1 class="doc-title">Vista del paciente — portal web</h1>
+    <p class="doc-sub">Wireframes para el flujo de auto-servicio del paciente: acceso, panel, agendamiento de cita, gestión de citas y expediente clínico personal. Misma paleta y sistema visual que el portal interno.</p>
+  </div>
+  <div class="doc-meta">
+    <div><b>Versión</b> · v1.0</div>
+    <div><b>Fecha</b> · 04 may 2026</div>
+    <div><b>5</b> pantallas · 1280×800</div>
+  </div>
+</header>
+
+
+<!-- ========================================================= -->
+<!-- 1. LOGIN / ACCESO PACIENTE                                -->
+<!-- ========================================================= -->
+<section class="screen-wrap" data-screen-label="01 Acceso paciente">
+  <div class="screen-label">
+    <span class="screen-num">01 / 05</span>
+    <h2 class="screen-name">Acceso paciente</h2>
+    <span class="screen-tag">/portal/login · público</span>
+  </div>
+  <div class="screen-rule"></div>
+
+  <div class="screen">
+    <div class="login">
+      <div class="login-left">
+        <div class="login-brand">
+          <div class="logo-mark">M+</div>
+          <div class="logo-name">MediSync<small>CLÍNICA SAN ÁNGEL</small></div>
+        </div>
+
+        <div>
+          <h2 class="login-headline">Gestiona la operación clínica<br>de principio a fin, en un solo lugar.</h2>
+          <p style="font-size:13px; color:var(--ink-3); max-width:440px; margin-top:14px; line-height:1.6">
+            Agendamiento, expedientes y reportes operativos para personal de recepción, médicos y dirección — y vista web para pacientes.
+          </p>
+        </div>
+
+        <div class="login-foot">
+          <span><b>Versión</b> 2.4.1</span>
+          <span><b>Soporte</b> ext. 2200</span>
+          <span><b>© 2026</b> Clínica San Ángel</span>
+        </div>
+      </div>
+
+      <div class="login-right">
+        <div class="login-card-head" style="margin-bottom:24px">
+          <h2>Iniciar sesión</h2>
+          <p>Ingresa con tu cuenta institucional para continuar.</p>
+        </div>
+
+        <div class="field">
+          <div class="field-row"><span class="label" style="margin:0">Usuario</span></div>
+          <div class="input">maria.lopez</div>
+        </div>
+
+        <div class="field">
+          <div class="field-row">
+            <span class="label" style="margin:0">Contraseña</span>
+            <a class="lnk">¿Olvidaste tu contraseña?</a>
+          </div>
+          <div class="input"><span class="ph">••••••••••</span><span class="end">mostrar</span></div>
+        </div>
+
+        <div class="field" style="margin-top:18px">
+          <span class="label">Rol de acceso</span>
+          <div class="role-picker" style="display:grid; grid-template-columns:repeat(4, 1fr); gap:6px; margin-top:6px; padding:3px; background:var(--surface-3); border-radius:var(--r-sm)">
+            <div class="role" style="border-radius:3px; padding:8px 6px; text-align:center; font-size:13px; color:var(--ink-3); font-weight:500">Recepcionista</div>
+            <div class="role" style="border-radius:3px; padding:8px 6px; text-align:center; font-size:13px; color:var(--ink-3); font-weight:500">Médico</div>
+            <div class="role" style="border-radius:3px; padding:8px 6px; text-align:center; font-size:13px; color:var(--ink-3); font-weight:500">Director</div>
+            <div class="role sel" style="border-radius:3px; padding:8px 6px; text-align:center; font-size:13px; color:var(--ink); font-weight:500; background:var(--surface); box-shadow:0 1px 2px rgba(17,20,24,.06), 0 0 0 1px var(--line)">Paciente</div>
+          </div>
+          <div style="margin-top:10px; font-size:12px; color:var(--ink-3); display:flex; justify-content:space-between; align-items:center">
+            <span>¿Eres paciente nuevo? <a style="color:var(--accent); font-weight:500">Crear cuenta</a></span>
+            <span style="font-family:var(--mono); font-size:10px; color:var(--ink-4); letter-spacing:.06em; text-transform:uppercase">HU-25 · WEB-03</span>
+          </div>
+        </div>
+
+        <div class="login-actions" style="margin-top:14px">
+          <button class="btn primary" style="width:100%; height:42px; justify-content:center; font-size:14px">Iniciar sesión</button>
+          <div style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--ink-3)">
+            <span style="width:14px; height:14px; border:1px solid var(--line-2); border-radius:3px; background:var(--surface)"></span>
+            Mantener sesión iniciada en este equipo
+          </div>
+        </div>
+
+        <div class="login-fine" style="margin-top:24px; padding-top:20px; border-top:1px solid var(--line); font-size:12px; color:var(--ink-3); display:flex; justify-content:space-between">
+          <span>Acceso seguro · TLS</span>
+          <span>v 2.4.1</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ========================================================= -->
+<!-- 2. DASHBOARD PACIENTE                                     -->
+<!-- ========================================================= -->
+<section class="screen-wrap" data-screen-label="02 Dashboard Paciente">
+  <div class="screen-label">
+    <span class="screen-num">02 / 05</span>
+    <h2 class="screen-name">Inicio · Paciente</h2>
+    <span class="screen-tag">/portal/inicio · rol: paciente</span>
+  </div>
+  <div class="screen-rule"></div>
+
+  <div class="screen">
+    <div class="app" style="height:800px">
+      <aside class="sidebar">
+        <div class="logo">
+          <div class="logo-mark">M+</div>
+          <div class="logo-name">MediSync<small>PORTAL PACIENTE</small></div>
+        </div>
+        <div class="nav-section">Mi cuenta</div>
+        <div class="nav-item active"><span class="ico"></span>Inicio</div>
+        <div class="nav-item"><span class="ico"></span>Mis citas <span class="count">3</span></div>
+        <div class="nav-item"><span class="ico"></span>Mi expediente</div>
+        <div class="nav-item"><span class="ico"></span>Recetas</div>
+        <div class="nav-item"><span class="ico"></span>Resultados</div>
+        <div class="nav-section">Otros</div>
+        <div class="nav-item"><span class="ico"></span>Pagos</div>
+        <div class="nav-item"><span class="ico"></span>Configuración</div>
+        <div class="nav-item"><span class="ico"></span>Ayuda</div>
+        <div class="nav-spacer"></div>
+        <div class="user-card">
+          <div class="avatar">RH</div>
+          <div><div class="nm">Roberto Hernández</div><small>Paciente</small></div>
+        </div>
+      </aside>
+
+      <main>
+        <div class="topbar">
+          <h2>Inicio</h2>
+          <span class="crumb">/ Portal</span>
+          <div class="spacer"></div>
+          <button class="btn icon ghost" title="Notificaciones">⌖</button>
+          <div class="userchip"><div class="avatar" style="width:28px; height:28px">RH</div><span class="nm">Roberto H.</span></div>
+        </div>
+
+        <div class="content">
+          <div class="page-head">
+            <div>
+              <h1>Hola, Roberto</h1>
+              <div class="sub">Lunes, 4 de mayo de 2026 · tu próxima cita es en 12 días</div>
+            </div>
+            <button class="btn primary">＋ Agendar cita</button>
+          </div>
+
+          <!-- Hero próxima cita -->
+          <div class="hero-card">
+            <div>
+              <span class="badge accent" style="margin-bottom:10px">Próxima cita</span>
+              <h2>Dr. Eduardo Mendoza · Cardiología</h2>
+              <div class="meta">
+                <b>Viernes 16 de mayo, 2026 · 11:00 hrs</b><br>
+                Consultorio 4 · Clínica San Ángel · Av. Insurgentes Sur 1234<br>
+                <span style="color:var(--ink-3)">Motivo: Seguimiento post-operatorio · revisión electrocardiograma</span>
+              </div>
+            </div>
+            <div class="hero-actions">
+              <span class="when">en 12 días</span>
+              <button class="btn primary">Confirmar asistencia</button>
+              <button class="btn">Reprogramar</button>
+              <button class="btn ghost danger-ghost sm">Cancelar cita</button>
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="stat-grid">
+            <div class="stat card">
+              <div class="lab">Citas próximas</div>
+              <div class="num">3</div>
+              <div class="delta">Próxima en 12 días</div>
+            </div>
+            <div class="stat card">
+              <div class="lab">Recetas activas</div>
+              <div class="num">2</div>
+              <div class="delta">1 vence este mes</div>
+            </div>
+            <div class="stat card">
+              <div class="lab">Resultados nuevos</div>
+              <div class="num">1</div>
+              <div class="delta">Sin revisar</div>
+            </div>
+          </div>
+
+          <!-- Two column: agenda + accesos -->
+          <div class="twocol">
+            <div class="card">
+              <div class="panel-head">
+                <h3>Mis próximas citas</h3>
+                <span class="pill">3</span>
+                <span class="more">Ver todas →</span>
+              </div>
+              <div>
+                <div class="appt-row">
+                  <div class="time">16 may<small>11:00</small></div>
+                  <div class="pat">Dr. Eduardo Mendoza<small>Cardiología · Consultorio 4</small></div>
+                  <div class="doc">en 12 días</div>
+                  <div><span class="badge ok">Confirmada</span></div>
+                  <div class="more-icon">⋯</div>
+                </div>
+                <div class="appt-row">
+                  <div class="time">02 jun<small>09:30</small></div>
+                  <div class="pat">Dra. Mariana Treviño<small>Dermatología · Consultorio 7</small></div>
+                  <div class="doc">en 29 días</div>
+                  <div><span class="badge warn">Pendiente</span></div>
+                  <div class="more-icon">⋯</div>
+                </div>
+                <div class="appt-row">
+                  <div class="time">18 jun<small>17:00</small></div>
+                  <div class="pat">Dr. Eduardo Mendoza<small>Cardiología · Consultorio 4</small></div>
+                  <div class="doc">en 45 días</div>
+                  <div><span class="badge ok">Confirmada</span></div>
+                  <div class="more-icon">⋯</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="panel-head">
+                <h3>Acciones rápidas</h3>
+              </div>
+              <div class="quick-grid">
+                <div class="quick">
+                  <div class="q-ico accent">＋</div>
+                  <div class="q-tit">Agendar cita</div>
+                  <div class="q-sub">Nueva consulta</div>
+                </div>
+                <div class="quick">
+                  <div class="q-ico">℞</div>
+                  <div class="q-tit">Mis recetas</div>
+                  <div class="q-sub">2 activas</div>
+                </div>
+                <div class="quick">
+                  <div class="q-ico">📄</div>
+                  <div class="q-tit">Resultados</div>
+                  <div class="q-sub">1 sin revisar</div>
+                </div>
+                <div class="quick">
+                  <div class="q-ico">$</div>
+                  <div class="q-tit">Pagos</div>
+                  <div class="q-sub">Sin pendientes</div>
+                </div>
+              </div>
+              <div style="padding:0">
+                <div class="note-block">
+                  <span class="dot"></span>
+                  <p><b>Recuerda:</b> tu receta de Losartán vence el 28 de mayo. Agenda una cita de seguimiento para renovarla.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</section>
+
+
+<!-- ========================================================= -->
+<!-- 3. AGENDAR CITA (wizard 3 pasos)                          -->
+<!-- ========================================================= -->
+<section class="screen-wrap" data-screen-label="03 Agendar cita">
+  <div class="screen-label">
+    <span class="screen-num">03 / 05</span>
+    <h2 class="screen-name">Agendar cita · paso 2 de 3</h2>
+    <span class="screen-tag">/portal/agendar</span>
+  </div>
+  <div class="screen-rule"></div>
+
+  <div class="screen" style="min-height:880px">
+    <div class="app" style="height:880px">
+      <aside class="sidebar">
+        <div class="logo">
+          <div class="logo-mark">M+</div>
+          <div class="logo-name">MediSync<small>PORTAL PACIENTE</small></div>
+        </div>
+        <div class="nav-section">Mi cuenta</div>
+        <div class="nav-item"><span class="ico"></span>Inicio</div>
+        <div class="nav-item active"><span class="ico"></span>Mis citas <span class="count">3</span></div>
+        <div class="nav-item"><span class="ico"></span>Mi expediente</div>
+        <div class="nav-item"><span class="ico"></span>Recetas</div>
+        <div class="nav-item"><span class="ico"></span>Resultados</div>
+        <div class="nav-section">Otros</div>
+        <div class="nav-item"><span class="ico"></span>Pagos</div>
+        <div class="nav-item"><span class="ico"></span>Configuración</div>
+        <div class="nav-spacer"></div>
+        <div class="user-card">
+          <div class="avatar">RH</div>
+          <div><div class="nm">Roberto Hernández</div><small>Paciente</small></div>
+        </div>
+      </aside>
+
+      <main>
+        <div class="topbar">
+          <h2>Agendar cita</h2>
+          <span class="crumb">/ Inicio / Agendar cita</span>
+          <div class="spacer"></div>
+          <button class="btn ghost sm">Cancelar y salir</button>
+          <div class="userchip"><div class="avatar" style="width:28px; height:28px">RH</div><span class="nm">Roberto H.</span></div>
+        </div>
+
+        <div class="content">
+          <div class="page-head">
+            <div>
+              <h1>Agendar nueva cita</h1>
+              <div class="sub">Completa los 3 pasos para reservar tu consulta. Recibirás confirmación por SMS y correo.</div>
+            </div>
+          </div>
+
+          <!-- Stepper -->
+          <div class="stepper">
+            <div class="step done">
+              <span class="n">✓</span>
+              <span class="lbl">Especialidad y médico<small>Cardiología · Dr. Mendoza</small></span>
+            </div>
+            <div class="step cur">
+              <span class="n">2</span>
+              <span class="lbl">Fecha y hora<small>Selecciona disponibilidad</small></span>
+            </div>
+            <div class="step">
+              <span class="n">3</span>
+              <span class="lbl">Motivo y confirmación<small>Detalles finales</small></span>
+            </div>
+          </div>
+
+          <!-- Step 2 content: calendar + slots + summary -->
+          <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:16px">
+
+            <div class="card" style="padding:18px 20px">
+              <div style="display:flex; align-items:center; margin-bottom:10px">
+                <div>
+                  <h3 style="margin:0; font-size:15px; font-weight:600">Selecciona una fecha</h3>
+                  <div style="font-size:12px; color:var(--ink-3); margin-top:2px">Mayo 2026 · disponibilidad de Dr. Mendoza</div>
+                </div>
+                <div style="margin-left:auto; display:flex; gap:6px">
+                  <button class="btn icon sm">‹</button>
+                  <button class="btn icon sm">›</button>
+                </div>
+              </div>
+
+              <div class="calendar">
+                <div class="dn">L</div><div class="dn">M</div><div class="dn">X</div><div class="dn">J</div><div class="dn">V</div><div class="dn">S</div><div class="dn">D</div>
+
+                <div class="d empty"><span class="num">28</span></div>
+                <div class="d empty"><span class="num">29</span></div>
+                <div class="d empty"><span class="num">30</span></div>
+                <div class="d full"><span class="num">1</span><span class="av">lleno</span></div>
+                <div class="d"><span class="num">2</span><span class="av">3 disp.</span></div>
+                <div class="d empty"><span class="num">3</span></div>
+                <div class="d empty"><span class="num">4</span></div>
+
+                <div class="d today"><span class="num">5</span><span class="av">5 disp.</span></div>
+                <div class="d"><span class="num">6</span><span class="av">8 disp.</span></div>
+                <div class="d full"><span class="num">7</span><span class="av">lleno</span></div>
+                <div class="d"><span class="num">8</span><span class="av">2 disp.</span></div>
+                <div class="d"><span class="num">9</span><span class="av">6 disp.</span></div>
+                <div class="d empty"><span class="num">10</span></div>
+                <div class="d empty"><span class="num">11</span></div>
+
+                <div class="d"><span class="num">12</span><span class="av">7 disp.</span></div>
+                <div class="d"><span class="num">13</span><span class="av">4 disp.</span></div>
+                <div class="d"><span class="num">14</span><span class="av">3 disp.</span></div>
+                <div class="d"><span class="num">15</span><span class="av">9 disp.</span></div>
+                <div class="d sel"><span class="num">16</span><span class="av">8 disp.</span></div>
+                <div class="d empty"><span class="num">17</span></div>
+                <div class="d empty"><span class="num">18</span></div>
+
+                <div class="d"><span class="num">19</span><span class="av">5 disp.</span></div>
+                <div class="d"><span class="num">20</span><span class="av">7 disp.</span></div>
+                <div class="d"><span class="num">21</span><span class="av">2 disp.</span></div>
+                <div class="d full"><span class="num">22</span><span class="av">lleno</span></div>
+                <div class="d"><span class="num">23</span><span class="av">6 disp.</span></div>
+                <div class="d empty"><span class="num">24</span></div>
+                <div class="d empty"><span class="num">25</span></div>
+
+                <div class="d"><span class="num">26</span><span class="av">4 disp.</span></div>
+                <div class="d"><span class="num">27</span><span class="av">8 disp.</span></div>
+                <div class="d"><span class="num">28</span><span class="av">3 disp.</span></div>
+                <div class="d"><span class="num">29</span><span class="av">7 disp.</span></div>
+                <div class="d"><span class="num">30</span><span class="av">5 disp.</span></div>
+                <div class="d empty"><span class="num">31</span></div>
+                <div class="d empty"><span class="num">1</span></div>
+              </div>
+
+              <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--line)">
+                <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
+                  <h4 style="margin:0; font-size:14px; font-weight:600">Hora · 16 mayo, 2026</h4>
+                  <span style="font-family:var(--mono); font-size:11px; color:var(--ink-3)">8 disponibles · 4 ocupados</span>
+                </div>
+                <div class="slot-grid">
+                  <div class="slot taken">09:00</div>
+                  <div class="slot taken">09:30</div>
+                  <div class="slot taken">10:00</div>
+                  <div class="slot">10:30</div>
+                  <div class="slot sel">11:00</div>
+                  <div class="slot">11:30</div>
+                  <div class="slot taken">12:00</div>
+                  <div class="slot">12:30</div>
+                  <div class="slot">13:00</div>
+                  <div class="slot">16:00</div>
+                  <div class="slot">16:30</div>
+                  <div class="slot">17:00</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Summary lateral -->
+            <div class="card" style="padding:18px 20px; align-self:flex-start">
+              <h3 style="margin:0 0 14px; font-size:15px; font-weight:600">Resumen de tu cita</h3>
+
+              <div class="summary-box">
+                <div class="summary-row">
+                  <div class="k">Especialidad</div>
+                  <div class="v">Cardiología</div>
+                </div>
+                <div class="summary-row">
+                  <div class="k">Médico</div>
+                  <div class="v">Dr. Eduardo Mendoza</div>
+                </div>
+                <div class="summary-row">
+                  <div class="k">Fecha</div>
+                  <div class="v">Vie 16 may, 2026</div>
+                </div>
+                <div class="summary-row">
+                  <div class="k">Hora</div>
+                  <div class="v">11:00 hrs · 30 min</div>
+                </div>
+                <div class="summary-row">
+                  <div class="k">Ubicación</div>
+                  <div class="v">Consultorio 4<br><span style="color:var(--ink-3); font-weight:400; font-size:12px">Clínica San Ángel · Av. Insurgentes 1234</span></div>
+                </div>
+                <div class="summary-row">
+                  <div class="k">Costo</div>
+                  <div class="v">$1,200 MXN</div>
+                </div>
+              </div>
+
+              <div class="note-block" style="margin:14px 0 0">
+                <span class="dot"></span>
+                <p>Si tienes seguro vigente, el pago puede aplicarse al copago. Verifica con recepción.</p>
+              </div>
+
+              <div style="display:flex; gap:8px; margin-top:18px">
+                <button class="btn" style="flex:1; justify-content:center">← Atrás</button>
+                <button class="btn primary" style="flex:1; justify-content:center">Continuar →</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</section>
+
+
+<!-- ========================================================= -->
+<!-- 4. MIS CITAS                                              -->
+<!-- ========================================================= -->
+<section class="screen-wrap" data-screen-label="04 Mis citas">
+  <div class="screen-label">
+    <span class="screen-num">04 / 05</span>
+    <h2 class="screen-name">Mis citas · paciente</h2>
+    <span class="screen-tag">/portal/citas</span>
+  </div>
+  <div class="screen-rule"></div>
+
+  <div class="screen">
+    <div class="app" style="height:800px">
+      <aside class="sidebar">
+        <div class="logo">
+          <div class="logo-mark">M+</div>
+          <div class="logo-name">MediSync<small>PORTAL PACIENTE</small></div>
+        </div>
+        <div class="nav-section">Mi cuenta</div>
+        <div class="nav-item"><span class="ico"></span>Inicio</div>
+        <div class="nav-item active"><span class="ico"></span>Mis citas <span class="count">3</span></div>
+        <div class="nav-item"><span class="ico"></span>Mi expediente</div>
+        <div class="nav-item"><span class="ico"></span>Recetas</div>
+        <div class="nav-item"><span class="ico"></span>Resultados</div>
+        <div class="nav-section">Otros</div>
+        <div class="nav-item"><span class="ico"></span>Pagos</div>
+        <div class="nav-item"><span class="ico"></span>Configuración</div>
+        <div class="nav-spacer"></div>
+        <div class="user-card">
+          <div class="avatar">RH</div>
+          <div><div class="nm">Roberto Hernández</div><small>Paciente</small></div>
+        </div>
+      </aside>
+
+      <main>
+        <div class="topbar">
+          <h2>Mis citas</h2>
+          <span class="crumb">/ Inicio / Mis citas</span>
+          <div class="spacer"></div>
+          <button class="btn primary">＋ Agendar cita</button>
+          <div class="userchip"><div class="avatar" style="width:28px; height:28px">RH</div><span class="nm">Roberto H.</span></div>
+        </div>
+
+        <div class="content">
+          <div class="page-head">
+            <div>
+              <h1>Mis citas</h1>
+              <div class="sub">Gestiona tus citas próximas y revisa tu historial</div>
+            </div>
+          </div>
+
+          <div class="tabs">
+            <div class="tab cur">Próximas <span class="ct">3</span></div>
+            <div class="tab">Historial <span class="ct">14</span></div>
+            <div class="tab">Canceladas <span class="ct">2</span></div>
+          </div>
+
+          <div>
+            <div class="appt-card">
+              <div class="date">
+                <div class="day">16</div>
+                <div class="mo">May 2026</div>
+                <div class="time">11:00 hrs</div>
+              </div>
+              <div class="info">
+                <div class="doc">Dr. Eduardo Mendoza</div>
+                <div class="spec">Cardiología · Consultorio 4 · Seguimiento post-operatorio</div>
+                <div class="meta">
+                  <span><b>Duración</b> 30 min</span>
+                  <span><b>Costo</b> $1,200 MXN</span>
+                  <span><b>En</b> 12 días</span>
+                </div>
+              </div>
+              <div class="actions">
+                <span class="badge ok" style="margin-right:8px">Confirmada</span>
+                <button class="btn sm">Reprogramar</button>
+                <button class="btn sm danger-ghost">Cancelar</button>
+              </div>
+            </div>
+
+            <div class="appt-card">
+              <div class="date">
+                <div class="day">02</div>
+                <div class="mo">Jun 2026</div>
+                <div class="time">09:30 hrs</div>
+              </div>
+              <div class="info">
+                <div class="doc">Dra. Mariana Treviño</div>
+                <div class="spec">Dermatología · Consultorio 7 · Revisión anual de lunares</div>
+                <div class="meta">
+                  <span><b>Duración</b> 45 min</span>
+                  <span><b>Costo</b> $1,400 MXN</span>
+                  <span><b>En</b> 29 días</span>
+                </div>
+              </div>
+              <div class="actions">
+                <span class="badge warn" style="margin-right:8px">Por confirmar</span>
+                <button class="btn primary sm">Confirmar</button>
+                <button class="btn sm danger-ghost">Cancelar</button>
+              </div>
+            </div>
+
+            <div class="appt-card">
+              <div class="date">
+                <div class="day">18</div>
+                <div class="mo">Jun 2026</div>
+                <div class="time">17:00 hrs</div>
+              </div>
+              <div class="info">
+                <div class="doc">Dr. Eduardo Mendoza</div>
+                <div class="spec">Cardiología · Consultorio 4 · Control trimestral</div>
+                <div class="meta">
+                  <span><b>Duración</b> 30 min</span>
+                  <span><b>Costo</b> $1,200 MXN</span>
+                  <span><b>En</b> 45 días</span>
+                </div>
+              </div>
+              <div class="actions">
+                <span class="badge ok" style="margin-right:8px">Confirmada</span>
+                <button class="btn sm">Reprogramar</button>
+                <button class="btn sm danger-ghost">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="note-block" style="margin:18px 0 0">
+            <span class="dot"></span>
+            <p><b>Política de cancelación:</b> puedes cancelar o reprogramar sin costo hasta 24 hrs antes de tu cita. Cancelaciones tardías generan un cargo del 50%.</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</section>
+
+
+<!-- ========================================================= -->
+<!-- 5. MI EXPEDIENTE                                          -->
+<!-- ========================================================= -->
+<section class="screen-wrap" data-screen-label="05 Mi expediente">
+  <div class="screen-label">
+    <span class="screen-num">05 / 05</span>
+    <h2 class="screen-name">Mi expediente clínico</h2>
+    <span class="screen-tag">/portal/expediente</span>
+  </div>
+  <div class="screen-rule"></div>
+
+  <div class="screen" style="min-height:960px">
+    <div class="app" style="height:960px">
+      <aside class="sidebar">
+        <div class="logo">
+          <div class="logo-mark">M+</div>
+          <div class="logo-name">MediSync<small>PORTAL PACIENTE</small></div>
+        </div>
+        <div class="nav-section">Mi cuenta</div>
+        <div class="nav-item"><span class="ico"></span>Inicio</div>
+        <div class="nav-item"><span class="ico"></span>Mis citas <span class="count">3</span></div>
+        <div class="nav-item active"><span class="ico"></span>Mi expediente</div>
+        <div class="nav-item"><span class="ico"></span>Recetas</div>
+        <div class="nav-item"><span class="ico"></span>Resultados</div>
+        <div class="nav-section">Otros</div>
+        <div class="nav-item"><span class="ico"></span>Pagos</div>
+        <div class="nav-item"><span class="ico"></span>Configuración</div>
+        <div class="nav-spacer"></div>
+        <div class="user-card">
+          <div class="avatar">RH</div>
+          <div><div class="nm">Roberto Hernández</div><small>Paciente</small></div>
+        </div>
+      </aside>
+
+      <main>
+        <div class="topbar">
+          <h2>Mi expediente</h2>
+          <span class="crumb">/ Inicio / Expediente</span>
+          <div class="spacer"></div>
+          <button class="btn sm">↓ Descargar PDF</button>
+          <div class="userchip"><div class="avatar" style="width:28px; height:28px">RH</div><span class="nm">Roberto H.</span></div>
+        </div>
+
+        <div class="content">
+          <div class="page-head">
+            <div>
+              <h1>Mi expediente clínico</h1>
+              <div class="sub">Historial médico, recetas activas e historial de consultas</div>
+            </div>
+            <button class="btn">✎ Editar datos personales</button>
+          </div>
+
+          <div class="profile-grid">
+            <!-- Profile column -->
+            <div>
+              <div class="card profile-card">
+                <div class="profile-av">RH</div>
+                <h3>Roberto Hernández Cruz</h3>
+                <div class="exp">EXP-11203 · 47 años</div>
+
+                <div class="profile-fields">
+                  <div class="profile-field">
+                    <div class="k">Tipo de sangre</div>
+                    <div class="v">O+ <span class="badge neutral" style="margin-left:6px">verificado</span></div>
+                  </div>
+                  <div class="profile-field">
+                    <div class="k">Fecha de nacimiento</div>
+                    <div class="v">12 marzo 1979</div>
+                  </div>
+                  <div class="profile-field">
+                    <div class="k">Teléfono</div>
+                    <div class="v" style="font-family:var(--mono); font-size:13px">55 5512 4490</div>
+                  </div>
+                  <div class="profile-field">
+                    <div class="k">Correo</div>
+                    <div class="v" style="font-family:var(--mono); font-size:12px"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="196b37717c6b7778777d7c63597a766b6b7c76377461">[email&#160;protected]</a></div>
+                  </div>
+                  <div class="profile-field">
+                    <div class="k">Contacto de emergencia</div>
+                    <div class="v">Marisol Hernández<br><span style="font-family:var(--mono); font-size:12px; color:var(--ink-3); font-weight:400">55 6611 2233 · esposa</span></div>
+                  </div>
+                  <div class="profile-field">
+                    <div class="k">Aseguradora</div>
+                    <div class="v">GNP Salud · Plan Premium<br><span style="font-family:var(--mono); font-size:11px; color:var(--ink-3); font-weight:400">Póliza 99 8821 4502</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right column: stacked cards -->
+            <div style="display:flex; flex-direction:column; gap:16px">
+
+              <!-- Resumen clínico -->
+              <div class="card">
+                <div class="panel-head">
+                  <h3>Resumen clínico</h3>
+                  <span class="more">Última actualización: 02 may 2026</span>
+                </div>
+                <div class="info-grid" style="padding:0">
+                  <div class="info-card-section" style="border-right:1px solid var(--line); border-top:none">
+                    <h4>Alergias</h4>
+                    <div class="kv"><div class="k">Medicamentos</div><div class="v">Penicilina <span class="badge bad" style="margin-left:6px">grave</span></div></div>
+                    <div class="kv"><div class="k">Alimentos</div><div class="v">Mariscos <span class="badge warn" style="margin-left:6px">leve</span></div></div>
+                    <div class="kv"><div class="k">Ambientales</div><div class="v">Polen, polvo</div></div>
+                  </div>
+                  <div class="info-card-section" style="border-top:none">
+                    <h4>Condiciones crónicas</h4>
+                    <div class="kv"><div class="k">Cardiovascular</div><div class="v">Hipertensión arterial<br><span style="font-family:var(--mono); font-size:11px; color:var(--ink-3)">Dx 2018 · controlada</span></div></div>
+                    <div class="kv"><div class="k">Metabólico</div><div class="v">Dislipidemia<br><span style="font-family:var(--mono); font-size:11px; color:var(--ink-3)">Dx 2020 · en tratamiento</span></div></div>
+                  </div>
+                </div>
+                <div class="info-card-section">
+                  <h4>Recetas activas</h4>
+                  <div class="kv">
+                    <div class="k">Losartán 50mg</div>
+                    <div class="v">1 tableta cada 24 hrs · vía oral<br><span style="font-family:var(--mono); font-size:11px; color:var(--ink-3)">Dr. Mendoza · vence 28 may 2026 <span class="badge warn" style="margin-left:6px">por vencer</span></span></div>
+                  </div>
+                  <div class="kv">
+                    <div class="k">Atorvastatina 20mg</div>
+                    <div class="v">1 tableta cada 24 hrs · por la noche<br><span style="font-family:var(--mono); font-size:11px; color:var(--ink-3)">Dr. Mendoza · vence 14 jul 2026 <span class="badge ok" style="margin-left:6px">vigente</span></span></div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Historial -->
+              <div class="card">
+                <div class="panel-head">
+                  <h3>Historial de consultas</h3>
+                  <span class="pill">14 consultas</span>
+                  <span class="more">Ver todas →</span>
+                </div>
+                <div style="padding:6px 18px 18px">
+                  <div class="timeline">
+                    <div class="tl-row done">
+                      <div class="tl-date">02 may 26</div>
+                      <div class="tl-marker"></div>
+                      <div class="tl-content">
+                        <div class="ttl">Dr. Eduardo Mendoza · Cardiología</div>
+                        <div class="meta">Consultorio 4 · 30 min · $1,200 MXN</div>
+                        <div class="desc">Control post-operatorio. Presión arterial 128/82. Electrocardiograma sin alteraciones nuevas. Continuar con tratamiento actual y seguimiento en 14 días.</div>
+                        <div class="rx">
+                          <h5>Receta emitida</h5>
+                          <ul>
+                            <li><b>Losartán 50mg</b> — 1 tableta cada 24 hrs · 30 días</li>
+                            <li><b>Atorvastatina 20mg</b> — 1 tableta cada 24 hrs · 60 días</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="tl-row done">
+                      <div class="tl-date">14 abr 26</div>
+                      <div class="tl-marker"></div>
+                      <div class="tl-content">
+                        <div class="ttl">Dr. Raúl Castañeda · Medicina general</div>
+                        <div class="meta">Consultorio 1 · 20 min · $800 MXN</div>
+                        <div class="desc">Chequeo anual. Solicitud de laboratorios: química de 27 elementos, perfil tiroideo, biometría hemática. <span class="badge accent" style="margin-left:6px">Resultados disponibles</span></div>
+                      </div>
+                    </div>
+
+                    <div class="tl-row done">
+                      <div class="tl-date">22 feb 26</div>
+                      <div class="tl-marker"></div>
+                      <div class="tl-content">
+                        <div class="ttl">Dr. Eduardo Mendoza · Cardiología</div>
+                        <div class="meta">Consultorio 4 · 30 min · $1,200 MXN</div>
+                        <div class="desc">Seguimiento trimestral. Ajuste de dosis de Losartán de 25mg a 50mg por elevación de presión arterial. Recomendación de dieta hiposódica.</div>
+                      </div>
+                    </div>
+
+                    <div class="tl-row done">
+                      <div class="tl-date">08 ene 26</div>
+                      <div class="tl-marker"></div>
+                      <div class="tl-content">
+                        <div class="ttl">Dra. Mariana Treviño · Dermatología</div>
+                        <div class="meta">Consultorio 7 · 45 min · $1,400 MXN</div>
+                        <div class="desc">Revisión anual de lunares. Sin hallazgos sospechosos. Recomendación de protección solar diaria FPS 50+.</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</section>
+
+
+<footer class="doc-foot">
+  <span>MediSync · Portal del Paciente — wireframes v1.0</span>
+  <span>04 mayo 2026 · 5 pantallas · 1280×800</span>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script></body>
+</html>

@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>MediSync — Registro de Paciente</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --surface:#ffffff;
+    --surface-2:#fafbfc;
+    --surface-3:#f0f2f5;
+    --line:#e3e6eb;
+    --line-2:#d4d8df;
+    --line-strong:#b6bcc6;
+    --ink:#111418;
+    --ink-2:#3a3f47;
+    --ink-3:#6b7280;
+    --ink-4:#9aa1ad;
+    --accent:#1f6feb;
+    --accent-soft:#e8f0fd;
+    --accent-line:#c5d8f7;
+    --ok:#137a3d;
+    --ok-bg:#e6f3ec;
+    --warn:#8a5a00;
+    --warn-bg:#fbf1d9;
+    --bad:#a4262c;
+    --bad-bg:#fae9ea;
+    --sans:'Inter', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --r-sm:4px;
+    --r-md:6px;
+    --r-lg:8px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  body{padding:48px 0 96px}
+
+  /* ---------- doc header ---------- */
+  .doc-head{
+    width:1280px; margin:0 auto 40px; padding:0 4px;
+    display:flex; align-items:flex-end; justify-content:space-between; gap:24px;
+  }
+  .doc-eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3); margin:0 0 8px}
+  .doc-title{font-family:var(--sans); font-weight:600; font-size:28px; line-height:1.15; margin:0; color:var(--ink); letter-spacing:-.01em}
+  .doc-sub{margin:8px 0 0; max-width:720px; font-size:14px; line-height:1.55; color:var(--ink-3)}
+  .doc-meta{font-family:var(--mono); font-size:11px; color:var(--ink-3); text-align:right; line-height:1.7}
+  .doc-meta b{color:var(--ink); font-weight:500}
+
+  /* ---------- screen frame ---------- */
+  .screen-wrap{width:1280px; margin:0 auto 56px}
+  .screen-label{display:flex; align-items:center; gap:14px; margin:0 0 14px; padding:0 2px}
+  .screen-num{font-family:var(--mono); font-size:11px; font-weight:500; color:var(--ink-3); letter-spacing:.06em}
+  .screen-name{font-family:var(--sans); font-weight:600; font-size:16px; margin:0; line-height:1; color:var(--ink); letter-spacing:-.005em}
+  .screen-tag{font-family:var(--mono); font-size:11px; color:var(--ink-3); margin-left:auto; border:1px solid var(--line); padding:3px 8px; border-radius:99px; background:var(--surface)}
+  .screen-rule{height:1px; background:var(--line); margin:0 0 12px}
+
+  .screen{width:1280px; min-height:800px; background:var(--surface); border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:0 1px 0 rgba(17,20,24,.02), 0 8px 24px -16px rgba(17,20,24,.08); position:relative; overflow:hidden}
+
+  /* ---------- primitives ---------- */
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-md)}
+  .label{font-family:var(--mono); font-size:10px; font-weight:500; color:var(--ink-3); text-transform:uppercase; letter-spacing:.08em; margin-bottom:6px; display:block}
+  .input{border:1px solid var(--line-2); border-radius:var(--r-sm); background:var(--surface); padding:9px 12px; font-family:var(--sans); font-size:14px; color:var(--ink); display:flex; align-items:center; gap:8px; height:38px}
+  .input.placeholder{color:var(--ink-4)}
+  .input.focus{border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft)}
+  .input .ph{color:var(--ink-4)}
+  .input .caret{display:inline-block; width:1px; height:16px; background:var(--ink); margin-left:1px; animation:blink 1s steps(2) infinite}
+  @keyframes blink{50%{opacity:0}}
+  .input .end{margin-left:auto; color:var(--ink-3); font-size:12px}
+  .input.select .end{color:var(--ink-3); font-size:10px}
+  .textarea{border:1px solid var(--line-2); border-radius:var(--r-sm); background:var(--surface); padding:9px 12px; font-family:var(--sans); font-size:14px; color:var(--ink-4); height:68px; display:flex; align-items:flex-start}
+
+  .btn{border:1px solid var(--line-2); border-radius:var(--r-sm); padding:0 14px; height:36px; background:var(--surface); font-family:var(--sans); font-size:13px; font-weight:500; color:var(--ink); display:inline-flex; align-items:center; gap:6px; cursor:default}
+  .btn.primary{background:var(--accent); color:#fff; border-color:var(--accent)}
+  .btn.ghost{background:transparent; border-color:transparent}
+  .btn.danger{color:var(--bad); border-color:rgba(164,38,44,.25); background:var(--bad-bg)}
+  .btn.sm{height:30px; padding:0 10px; font-size:12px}
+  .btn.icon{width:32px; padding:0; justify-content:center}
+  .pill{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line-2); border-radius:99px; padding:2px 8px; background:var(--surface); font-family:var(--sans); font-size:11px; line-height:1.6; font-weight:500; color:var(--ink-2)}
+  .badge{display:inline-flex; align-items:center; gap:6px; font-family:var(--sans); font-size:12px; font-weight:500; line-height:1; padding:4px 8px; border-radius:var(--r-sm); border:1px solid transparent}
+  .badge::before{content:""; width:6px; height:6px; border-radius:50%; background:currentColor}
+  .badge.ok{color:var(--ok); background:var(--ok-bg); border-color:rgba(19,122,61,.18)}
+  .badge.warn{color:var(--warn); background:var(--warn-bg); border-color:rgba(138,90,0,.18)}
+  .badge.neutral{color:var(--ink-3); background:var(--surface-3); border-color:var(--line)}
+
+  /* ---------- sidebar ---------- */
+  .app{display:grid; grid-template-columns:228px 1fr; height:800px}
+  .sidebar{border-right:1px solid var(--line); background:var(--surface-2); padding:18px 14px; display:flex; flex-direction:column; gap:2px}
+  .logo{display:flex; align-items:center; gap:10px; padding:6px 8px 16px; margin-bottom:12px; border-bottom:1px solid var(--line)}
+  .logo-mark{width:30px; height:30px; border-radius:var(--r-sm); background:var(--ink); display:grid; place-items:center; color:#fff; font-weight:600; font-size:13px; letter-spacing:-.02em}
+  .logo-name{font-family:var(--sans); font-size:14px; font-weight:600; line-height:1.1; letter-spacing:-.01em}
+  .logo-name small{display:block; font-family:var(--mono); font-size:9px; font-weight:500; color:var(--ink-3); letter-spacing:.16em; margin-top:3px; text-transform:uppercase}
+  .nav-section{font-family:var(--mono); font-size:10px; font-weight:500; color:var(--ink-4); text-transform:uppercase; letter-spacing:.1em; padding:14px 8px 6px}
+  .nav-item{display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:var(--r-sm); font-family:var(--sans); font-size:13px; color:var(--ink-2)}
+  .nav-item .ico{width:14px; height:14px; border:1.25px solid var(--ink-3); border-radius:3px; display:inline-block; flex:none}
+  .nav-item .count{margin-left:auto; font-family:var(--mono); font-size:10px; color:var(--ink-3)}
+  .nav-item.active{background:var(--surface); color:var(--ink); font-weight:500; box-shadow:inset 0 0 0 1px var(--line)}
+  .nav-item.active .ico{background:var(--ink); border-color:var(--ink)}
+  .nav-spacer{flex:1}
+  .user-card{border-top:1px solid var(--line); padding-top:12px; margin-top:12px; display:flex; align-items:center; gap:10px; font-family:var(--sans); font-size:13px}
+  .avatar{width:30px; height:30px; border-radius:50%; background:var(--surface-3); border:1px solid var(--line); display:grid; place-items:center; font-family:var(--sans); font-weight:600; font-size:11px; color:var(--ink-2)}
+  .user-card .nm{font-weight:500; color:var(--ink); line-height:1.2}
+  .user-card small{font-family:var(--mono); font-size:9px; color:var(--ink-3); display:block; letter-spacing:.1em; text-transform:uppercase; margin-top:2px}
+
+  /* ---------- topbar ---------- */
+  .topbar{height:56px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:14px; padding:0 24px; background:var(--surface)}
+  .topbar h2{margin:0; font-family:var(--sans); font-size:16px; font-weight:600; line-height:1; letter-spacing:-.005em}
+  .topbar .crumb{font-family:var(--mono); font-size:11px; color:var(--ink-3)}
+  .topbar .spacer{flex:1}
+  .topbar .search-mini{width:280px; height:32px; border:1px solid var(--line-2); border-radius:var(--r-sm); padding:0 10px; display:flex; align-items:center; gap:8px; font-size:13px; color:var(--ink-4); background:var(--surface-2)}
+  .topbar .search-mini .kbd{margin-left:auto; font-family:var(--mono); font-size:10px; color:var(--ink-3); border:1px solid var(--line); border-radius:3px; padding:1px 5px; background:var(--surface)}
+  .topbar .userchip{display:flex; align-items:center; gap:8px; padding-left:8px; border-left:1px solid var(--line)}
+  .topbar .userchip .nm{font-size:13px; font-weight:500}
+
+  /* ---------- stepper ---------- */
+  .stepper{
+    display:flex; align-items:center;
+    padding:0 24px;
+    height:52px;
+    background:var(--surface-2);
+    border-bottom:1px solid var(--line);
+    gap:0;
+  }
+  .step-item{
+    display:flex; align-items:center; gap:10px;
+    padding:0 20px; height:100%;
+    font-family:var(--sans); font-size:13px; color:var(--ink-3);
+    position:relative;
+    cursor:default;
+  }
+  .step-item:first-child{padding-left:0}
+  .step-item + .step-item::before{
+    content:"";
+    display:block; width:20px; height:1px;
+    background:var(--line-2);
+    position:absolute; left:0; top:50%; transform:translateY(-50%);
+  }
+  .step-num{
+    width:22px; height:22px; border-radius:50%;
+    display:grid; place-items:center;
+    font-family:var(--mono); font-size:11px; font-weight:500;
+    background:var(--surface-3); border:1px solid var(--line-2);
+    color:var(--ink-3); flex:none;
+  }
+  .step-item.active{color:var(--ink); font-weight:500}
+  .step-item.active .step-num{background:var(--ink); border-color:var(--ink); color:#fff}
+  .step-item.done{color:var(--ok)}
+  .step-item.done .step-num{background:var(--ok-bg); border-color:rgba(19,122,61,.25); color:var(--ok)}
+  .step-label{line-height:1.2}
+  .step-sub{display:block; font-family:var(--mono); font-size:9px; color:var(--ink-4); text-transform:uppercase; letter-spacing:.1em; margin-top:2px; font-weight:400}
+  .step-item.active .step-sub{color:var(--ink-3)}
+  .step-item.done .step-sub{color:var(--ok); opacity:.7}
+
+  /* ---------- content ---------- */
+  .content{padding:22px 24px; overflow-y:auto; max-height:calc(800px - 56px - 52px - 60px)}
+
+  /* ---------- page header ---------- */
+  .page-head{display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:20px}
+  .page-head h1{margin:0; font-family:var(--sans); font-weight:600; font-size:20px; line-height:1.2; letter-spacing:-.01em}
+  .page-head .sub{font-size:13px; color:var(--ink-3); margin-top:4px}
+
+  /* ---------- form sections ---------- */
+  .form-section{
+    margin-bottom:24px;
+    border:1px solid var(--line);
+    border-radius:var(--r-lg);
+    background:var(--surface);
+    overflow:hidden;
+  }
+  .form-section-head{
+    padding:14px 18px;
+    border-bottom:1px solid var(--line);
+    background:var(--surface-2);
+    display:flex; align-items:center; gap:10px;
+  }
+  .form-section-head h3{margin:0; font-size:13px; font-weight:600; letter-spacing:-.005em}
+  .form-section-head .sec-num{
+    width:20px; height:20px; border-radius:50%;
+    background:var(--ink); color:#fff;
+    font-family:var(--mono); font-size:10px; font-weight:500;
+    display:grid; place-items:center; flex:none;
+  }
+  .form-section-head .sec-note{
+    margin-left:auto;
+    font-family:var(--mono); font-size:10px; color:var(--ink-4);
+    letter-spacing:.06em;
+  }
+  .form-section-body{padding:18px}
+
+  /* ---------- form grid ---------- */
+  .fg-2{display:grid; grid-template-columns:1fr 1fr; gap:14px 16px}
+  .fg-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px 16px}
+  .fg-4{display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:14px 16px}
+  .fg-13{display:grid; grid-template-columns:1fr 3fr; gap:14px 16px}
+  .fg-full{grid-column:1/-1}
+
+  .field{display:flex; flex-direction:column}
+  .field-note{font-size:11px; color:var(--ink-4); margin-top:4px; font-family:var(--mono); font-size:10px; letter-spacing:.04em}
+  .field-required::after{content:" *"; color:var(--bad); font-family:var(--mono); font-size:10px}
+
+  /* ---------- toggle / radio group ---------- */
+  .seg-group{
+    display:flex; border:1px solid var(--line-2); border-radius:var(--r-sm);
+    background:var(--surface-3); overflow:hidden; height:38px;
+  }
+  .seg-opt{
+    flex:1; display:grid; place-items:center;
+    font-family:var(--sans); font-size:13px; color:var(--ink-3);
+    border-right:1px solid var(--line-2); cursor:default;
+  }
+  .seg-opt:last-child{border-right:none}
+  .seg-opt.sel{background:var(--surface); color:var(--ink); font-weight:500; box-shadow:inset 0 0 0 1px var(--line)}
+
+  /* ---------- tag input ---------- */
+  .tag-field{
+    border:1px solid var(--line-2); border-radius:var(--r-sm); background:var(--surface);
+    padding:6px 10px; min-height:38px;
+    display:flex; align-items:center; flex-wrap:wrap; gap:6px;
+    font-family:var(--sans); font-size:13px; color:var(--ink-4);
+  }
+  .tag{
+    display:inline-flex; align-items:center; gap:4px;
+    background:var(--surface-3); border:1px solid var(--line); border-radius:99px;
+    padding:2px 8px; font-size:12px; color:var(--ink-2); font-weight:500;
+  }
+  .tag .x{color:var(--ink-3); font-size:10px; margin-left:2px}
+
+  /* ---------- info callout ---------- */
+  .callout{
+    border:1px solid var(--accent-line);
+    border-radius:var(--r-md);
+    background:var(--accent-soft);
+    padding:12px 16px;
+    display:flex; gap:10px;
+    font-size:13px; color:var(--ink-2);
+    margin-bottom:20px;
+  }
+  .callout .ico{font-size:16px; flex:none; line-height:1.3}
+  .callout b{color:var(--ink)}
+
+  /* ---------- required legend ---------- */
+  .req-legend{
+    font-family:var(--mono); font-size:10px; color:var(--ink-4);
+    letter-spacing:.05em; margin-bottom:18px;
+  }
+  .req-legend span{color:var(--bad); margin-right:4px}
+
+  /* ---------- sticky footer ---------- */
+  .form-footer{
+    position:sticky; bottom:0;
+    height:60px;
+    border-top:1px solid var(--line);
+    background:var(--surface-2);
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 24px;
+    z-index:10;
+  }
+  .form-footer .left{display:flex; align-items:center; gap:10px}
+  .form-footer .right{display:flex; align-items:center; gap:8px}
+  .form-footer .status-note{
+    font-family:var(--mono); font-size:10px; color:var(--ink-3);
+    letter-spacing:.06em;
+  }
+
+  /* ---------- photo placeholder ---------- */
+  .photo-placeholder{
+    width:80px; height:80px; border-radius:var(--r-md);
+    border:1.5px dashed var(--line-strong);
+    background:var(--surface-3);
+    display:grid; place-items:center;
+    color:var(--ink-4); font-size:11px; text-align:center; line-height:1.4;
+    cursor:default; padding:8px;
+  }
+  .photo-placeholder .ico{font-size:20px; display:block; margin-bottom:4px; color:var(--ink-3)}
+
+  /* ---------- divider ---------- */
+  .divider{height:1px; background:var(--line); margin:16px 0}
+
+  /* ---------- checkbox row ---------- */
+  .check-row{
+    display:flex; align-items:center; gap:10px;
+    font-size:13px; color:var(--ink-2); padding:8px 0;
+    border-bottom:1px solid var(--line);
+  }
+  .check-row:last-child{border-bottom:none}
+  .check-box{
+    width:16px; height:16px; border:1.25px solid var(--line-2); border-radius:3px;
+    background:var(--surface); flex:none; display:grid; place-items:center;
+  }
+  .check-box.checked{background:var(--accent); border-color:var(--accent)}
+  .check-box.checked::after{content:"✓"; color:#fff; font-size:10px; font-weight:700}
+  .check-note{margin-left:auto; font-family:var(--mono); font-size:10px; color:var(--ink-4); letter-spacing:.05em}
+
+  /* ---------- doc footer ---------- */
+  .doc-foot{
+    width:1280px; margin:0 auto;
+    display:flex; justify-content:space-between;
+    font-family:var(--mono); font-size:11px; color:var(--ink-3);
+    padding:0 4px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================= DOC HEADER ============================= -->
+<div class="doc-head">
+  <div>
+    <p class="doc-eyebrow">MediSync · Clínica San Ángel · Wireframes v2.1</p>
+    <h1 class="doc-title">Registro de Paciente</h1>
+    <p class="doc-sub">
+      Pantalla de alta de nuevo paciente — accesible desde el módulo de Pacientes o desde el acceso rápido del dashboard.
+      Flujo en 4 pasos: Datos personales → Contacto → Información médica → Confirmación.
+    </p>
+  </div>
+  <div class="doc-meta">
+    <div><b>Pantalla</b> 07 / 07</div>
+    <div><b>Ruta</b> /pacientes/nuevo</div>
+    <div><b>Rol</b> Recepcionista</div>
+    <div><b>Fecha</b> 04 may 2026</div>
+  </div>
+</div>
+
+<!-- ============================= SCREEN ============================= -->
+<div class="screen-wrap">
+  <div class="screen-label">
+    <span class="screen-num">07 / 07</span>
+    <h2 class="screen-name">Registro de Paciente · Paso 1 — Datos Personales</h2>
+    <span class="screen-tag">/pacientes/nuevo · rol: recepcionista</span>
+  </div>
+  <div class="screen-rule"></div>
+
+  <div class="screen">
+    <div class="app">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="logo">
+          <div class="logo-mark">M+</div>
+          <div class="logo-name">MediSync<small>SAN ÁNGEL</small></div>
+        </div>
+
+        <div class="nav-section">Principal</div>
+        <div class="nav-item"><span class="ico"></span>Inicio</div>
+        <div class="nav-item"><span class="ico"></span>Agenda <span class="count">28</span></div>
+        <div class="nav-item active"><span class="ico"></span>Pacientes</div>
+        <div class="nav-item"><span class="ico"></span>Médicos</div>
+
+        <div class="nav-section">Cuenta</div>
+        <div class="nav-item"><span class="ico"></span>Configuración</div>
+        <div class="nav-item"><span class="ico"></span>Ayuda</div>
+
+        <div class="nav-spacer"></div>
+        <div class="user-card">
+          <div class="avatar">ML</div>
+          <div><div class="nm">María López</div><small>Recepción</small></div>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main style="display:flex; flex-direction:column; overflow:hidden">
+
+        <!-- TOPBAR -->
+        <div class="topbar">
+          <h2>Pacientes</h2>
+          <span class="crumb">/ Nuevo registro</span>
+          <div class="spacer"></div>
+          <div class="search-mini">
+            <span>⌕</span>
+            <span>Buscar paciente, cita, médico…</span>
+            <span class="kbd">⌘ K</span>
+          </div>
+          <button class="btn icon ghost" title="Notificaciones">⌖</button>
+          <div class="userchip"><div class="avatar" style="width:28px;height:28px">ML</div><span class="nm">María L.</span></div>
+        </div>
+
+        <!-- STEPPER -->
+        <div class="stepper">
+          <!-- Step 1 active -->
+          <div class="step-item active">
+            <div class="step-num">1</div>
+            <div class="step-label">Datos personales<small class="step-sub">Identidad · CURP</small></div>
+          </div>
+          <!-- Step 2 -->
+          <div class="step-item" style="padding-left:32px">
+            <div class="step-num">2</div>
+            <div class="step-label">Contacto<small class="step-sub">Tel · Email · Dirección</small></div>
+          </div>
+          <!-- Step 3 -->
+          <div class="step-item" style="padding-left:32px">
+            <div class="step-num">3</div>
+            <div class="step-label">Información médica<small class="step-sub">Sangre · Alergias</small></div>
+          </div>
+          <!-- Step 4 -->
+          <div class="step-item" style="padding-left:32px">
+            <div class="step-num">4</div>
+            <div class="step-label">Confirmación<small class="step-sub">Revisar y guardar</small></div>
+          </div>
+
+          <div style="flex:1"></div>
+          <span class="badge warn">Borrador en progreso</span>
+        </div>
+
+        <!-- CONTENT -->
+        <div class="content">
+
+          <div class="page-head">
+            <div>
+              <h1>Nuevo paciente</h1>
+              <div class="sub">Completa los datos para registrar el expediente. Los campos marcados con * son obligatorios.</div>
+            </div>
+            <div style="display:flex; gap:8px">
+              <button class="btn sm ghost">Importar desde CURP</button>
+              <button class="btn sm">Cargar expediente anterior</button>
+            </div>
+          </div>
+
+          <div class="callout">
+            <span class="ico">ℹ</span>
+            <span><b>Búsqueda previa:</b> antes de continuar, verifica que el paciente no tenga ya un expediente en el sistema. Usa <b>⌘ K</b> para buscar por nombre o CURP.</span>
+          </div>
+
+          <!-- ====== SECCIÓN 1: FOTO + DATOS BÁSICOS ====== -->
+          <div class="form-section">
+            <div class="form-section-head">
+              <div class="sec-num">1</div>
+              <h3>Identificación personal</h3>
+              <span class="sec-note">HU-31 · P-01</span>
+            </div>
+            <div class="form-section-body">
+              <div style="display:flex; gap:20px; align-items:flex-start">
+
+                <!-- Foto -->
+                <div style="flex:none; display:flex; flex-direction:column; gap:8px; align-items:center">
+                  <div class="photo-placeholder">
+                    <span class="ico">◻</span>
+                    Foto del paciente
+                  </div>
+                  <button class="btn sm ghost" style="width:80px; font-size:11px; justify-content:center">Subir foto</button>
+                </div>
+
+                <!-- Campos -->
+                <div style="flex:1">
+                  <div class="fg-3" style="margin-bottom:14px">
+                    <div class="field">
+                      <span class="label field-required">Nombre(s)</span>
+                      <div class="input focus">Roberto<span class="caret"></span></div>
+                    </div>
+                    <div class="field">
+                      <span class="label field-required">Primer apellido</span>
+                      <div class="input">Hernández</div>
+                    </div>
+                    <div class="field">
+                      <span class="label">Segundo apellido</span>
+                      <div class="input placeholder"><span class="ph">Opcional</span></div>
+                    </div>
+                  </div>
+
+                  <div class="fg-4">
+                    <div class="field">
+                      <span class="label field-required">Fecha de nacimiento</span>
+                      <div class="input">12 / 03 / 1985<span class="end">▾</span></div>
+                    </div>
+                    <div class="field">
+                      <span class="label field-required">Sexo biológico</span>
+                      <div class="seg-group">
+                        <div class="seg-opt sel">M</div>
+                        <div class="seg-opt">F</div>
+                        <div class="seg-opt">Otro</div>
+                      </div>
+                    </div>
+                    <div class="field">
+                      <span class="label">Género (opcional)</span>
+                      <div class="input select placeholder"><span class="ph">Seleccionar…</span><span class="end">▾</span></div>
+                    </div>
+                    <div class="field">
+                      <span class="label">Estado civil</span>
+                      <div class="input select placeholder"><span class="ph">Seleccionar…</span><span class="end">▾</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="fg-3">
+                <div class="field">
+                  <span class="label field-required">CURP</span>
+                  <div class="input" style="font-family:var(--mono); font-size:13px; letter-spacing:.04em">HERR850312HNLRBS09</div>
+                  <span class="field-note">18 caracteres · validado</span>
+                </div>
+                <div class="field">
+                  <span class="label">RFC</span>
+                  <div class="input placeholder" style="font-family:var(--mono); font-size:13px"><span class="ph">HERR850312XXX</span></div>
+                  <span class="field-note">Opcional · para facturación</span>
+                </div>
+                <div class="field">
+                  <span class="label">Número de seguro social</span>
+                  <div class="input placeholder" style="font-family:var(--mono); font-size:13px"><span class="ph">IMSS / ISSSTE</span></div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="fg-3">
+                <div class="field">
+                  <span class="label">Nacionalidad</span>
+                  <div class="input select">Mexicana<span class="end">▾</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">Estado de nacimiento</span>
+                  <div class="input select placeholder"><span class="ph">Seleccionar estado…</span><span class="end">▾</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">Ocupación</span>
+                  <div class="input placeholder"><span class="ph">Ej. Ingeniero, Docente…</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ====== SECCIÓN 2: CONTACTO ====== -->
+          <div class="form-section">
+            <div class="form-section-head">
+              <div class="sec-num">2</div>
+              <h3>Datos de contacto</h3>
+              <span class="sec-note">HU-31 · P-02</span>
+            </div>
+            <div class="form-section-body">
+              <div class="fg-3" style="margin-bottom:14px">
+                <div class="field">
+                  <span class="label field-required">Teléfono celular</span>
+                  <div class="input"><span style="color:var(--ink-3); font-family:var(--mono); font-size:12px">+52</span> 81 1234 5678</div>
+                </div>
+                <div class="field">
+                  <span class="label">Teléfono alternativo</span>
+                  <div class="input placeholder"><span class="ph">+52 __ ____ ____</span></div>
+                </div>
+                <div class="field">
+                  <span class="label field-required">Correo electrónico</span>
+                  <div class="input placeholder"><span class="ph">ejemplo@correo.com</span></div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+              <div style="font-family:var(--mono); font-size:10px; color:var(--ink-4); letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px">Dirección de residencia</div>
+
+              <div class="fg-4" style="margin-bottom:14px">
+                <div class="field" style="grid-column:1/3">
+                  <span class="label field-required">Calle y número</span>
+                  <div class="input placeholder"><span class="ph">Av. Principal 1234, Int. 5</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">Colonia</span>
+                  <div class="input placeholder"><span class="ph">Colonia…</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">C.P.</span>
+                  <div class="input placeholder" style="font-family:var(--mono)"><span class="ph">64000</span></div>
+                </div>
+              </div>
+              <div class="fg-3">
+                <div class="field">
+                  <span class="label">Municipio / Alcaldía</span>
+                  <div class="input placeholder"><span class="ph">Monterrey</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">Estado</span>
+                  <div class="input select placeholder"><span class="ph">Nuevo León</span><span class="end">▾</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">País</span>
+                  <div class="input select">México<span class="end">▾</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ====== SECCIÓN 3: INFO MÉDICA ====== -->
+          <div class="form-section">
+            <div class="form-section-head">
+              <div class="sec-num">3</div>
+              <h3>Información médica básica</h3>
+              <div style="margin-left:8px"><span class="badge neutral">Completar en paso 3</span></div>
+              <span class="sec-note">HU-31 · P-03</span>
+            </div>
+            <div class="form-section-body">
+              <div class="fg-4" style="margin-bottom:14px">
+                <div class="field">
+                  <span class="label field-required">Tipo de sangre</span>
+                  <div class="input select placeholder"><span class="ph">A+, B−…</span><span class="end">▾</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">Peso (kg)</span>
+                  <div class="input placeholder"><span class="ph">00.0</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">Estatura (cm)</span>
+                  <div class="input placeholder"><span class="ph">000</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">¿Donador de órganos?</span>
+                  <div class="seg-group">
+                    <div class="seg-opt sel">Sí</div>
+                    <div class="seg-opt">No</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="fg-2" style="margin-bottom:14px">
+                <div class="field">
+                  <span class="label">Alergias conocidas</span>
+                  <div class="tag-field">
+                    <span class="tag">Penicilina <span class="x">✕</span></span>
+                    <span class="tag">Aspirina <span class="x">✕</span></span>
+                    <span class="ph">Agregar alergia…</span>
+                  </div>
+                  <span class="field-note">Escribe y presiona Enter para agregar</span>
+                </div>
+                <div class="field">
+                  <span class="label">Enfermedades crónicas</span>
+                  <div class="tag-field">
+                    <span class="ph">Ej. Diabetes, Hipertensión…</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="field fg-full">
+                <span class="label">Observaciones médicas generales</span>
+                <div class="textarea"><span class="ph">Notas relevantes para el expediente (antecedentes, cirugías previas, medicamentos actuales…)</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ====== SECCIÓN 4: CONTACTO DE EMERGENCIA + SEGURO ====== -->
+          <div class="form-section">
+            <div class="form-section-head">
+              <div class="sec-num">4</div>
+              <h3>Contacto de emergencia &amp; seguro médico</h3>
+              <span class="sec-note">HU-31 · P-04</span>
+            </div>
+            <div class="form-section-body">
+              <div style="font-family:var(--mono); font-size:10px; color:var(--ink-4); letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px">Contacto de emergencia</div>
+              <div class="fg-4" style="margin-bottom:18px">
+                <div class="field" style="grid-column:1/3">
+                  <span class="label field-required">Nombre completo</span>
+                  <div class="input placeholder"><span class="ph">Nombre del contacto</span></div>
+                </div>
+                <div class="field">
+                  <span class="label field-required">Parentesco</span>
+                  <div class="input select placeholder"><span class="ph">Seleccionar…</span><span class="end">▾</span></div>
+                </div>
+                <div class="field">
+                  <span class="label field-required">Teléfono</span>
+                  <div class="input placeholder"><span class="ph">+52 __ ____ ____</span></div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+              <div style="font-family:var(--mono); font-size:10px; color:var(--ink-4); letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px">Seguro / convenio médico</div>
+
+              <div class="fg-4">
+                <div class="field">
+                  <span class="label">Aseguradora</span>
+                  <div class="input select placeholder"><span class="ph">GNP, AXA, IMSS…</span><span class="end">▾</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">No. de póliza</span>
+                  <div class="input placeholder" style="font-family:var(--mono)"><span class="ph">000-000-000</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">Vigencia</span>
+                  <div class="input placeholder"><span class="ph">dd / mm / aaaa</span><span class="end">▾</span></div>
+                </div>
+                <div class="field">
+                  <span class="label">Cobertura</span>
+                  <div class="input select placeholder"><span class="ph">Tipo de cobertura…</span><span class="end">▾</span></div>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+              <div style="font-family:var(--mono); font-size:10px; color:var(--ink-4); letter-spacing:.08em; text-transform:uppercase; margin-bottom:12px">Consentimientos &amp; avisos</div>
+
+              <div class="check-row">
+                <div class="check-box checked"></div>
+                <span>El paciente autoriza el tratamiento de sus datos personales conforme al <b>Aviso de Privacidad</b> de la Clínica San Ángel.</span>
+                <span class="check-note">OBLIGATORIO</span>
+              </div>
+              <div class="check-row">
+                <div class="check-box"></div>
+                <span>El paciente acepta recibir recordatorios de cita por SMS y correo electrónico.</span>
+                <span class="check-note">OPCIONAL</span>
+              </div>
+              <div class="check-row">
+                <div class="check-box"></div>
+                <span>Se adjuntó identificación oficial (INE / pasaporte) al expediente físico.</span>
+                <span class="check-note">OPCIONAL</span>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /content -->
+
+        <!-- STICKY FOOTER -->
+        <div class="form-footer">
+          <div class="left">
+            <button class="btn danger sm">Cancelar</button>
+            <span class="status-note">PASO 1 DE 4 · BORRADOR GUARDADO AUTO · 10:42 A.M.</span>
+          </div>
+          <div class="right">
+            <button class="btn sm">Guardar borrador</button>
+            <button class="btn primary" style="height:36px; padding:0 20px; font-size:13px">Continuar → Contacto</button>
+          </div>
+        </div>
+
+      </main>
+    </div><!-- /app -->
+  </div><!-- /screen -->
+</div><!-- /screen-wrap -->
+
+<footer class="doc-foot">
+  <span>MediSync · Clínica San Ángel — wireframes v2.1</span>
+  <span>04 mayo 2026 · 7 pantallas · 1280×800</span>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+<meta charset="utf-8"/>
+<title>MediSync — HU-13 Notificación por correo al agendar</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=IBM+Plex+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<style>
+  :root{
+    --bg:#f4f5f7;
+    --surface:#ffffff;
+    --surface-2:#fafbfc;
+    --surface-3:#f0f2f5;
+    --line:#e3e6eb;
+    --line-2:#d4d8df;
+    --line-strong:#b6bcc6;
+    --ink:#111418;
+    --ink-2:#3a3f47;
+    --ink-3:#6b7280;
+    --ink-4:#9aa1ad;
+    --accent:#1f6feb;
+    --accent-soft:#e8f0fd;
+    --accent-line:#c5d8f7;
+    --ok:#137a3d;
+    --ok-bg:#e6f3ec;
+    --warn:#8a5a00;
+    --warn-bg:#fbf1d9;
+    --bad:#a4262c;
+    --bad-bg:#fae9ea;
+    --sans:'Inter', system-ui, -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --mono:'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --r-sm:4px; --r-md:6px; --r-lg:8px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  body{padding:48px 0 96px}
+
+  /* doc header */
+  .doc-head{width:1280px;margin:0 auto 40px;padding:0 4px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px}
+  .doc-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin:0 0 8px}
+  .doc-title{font-family:var(--sans);font-weight:600;font-size:28px;line-height:1.15;margin:0;color:var(--ink);letter-spacing:-.01em}
+  .doc-sub{margin:8px 0 0;max-width:680px;font-size:14px;line-height:1.55;color:var(--ink-3)}
+  .doc-meta{font-family:var(--mono);font-size:11px;color:var(--ink-3);text-align:right;line-height:1.7}
+  .doc-meta b{color:var(--ink);font-weight:500}
+
+  /* screen frame */
+  .screen-wrap{width:1280px;margin:0 auto 64px}
+  .screen-label{display:flex;align-items:center;gap:14px;margin:0 0 14px;padding:0 2px}
+  .screen-num{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--ink-3);letter-spacing:.06em}
+  .screen-name{font-family:var(--sans);font-weight:600;font-size:16px;margin:0;line-height:1;color:var(--ink);letter-spacing:-.005em}
+  .screen-tag{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-left:auto;border:1px solid var(--line);padding:3px 8px;border-radius:99px;background:var(--surface)}
+  .screen-rule{height:1px;background:var(--line);margin:0 0 12px}
+  .screen{width:1280px;min-height:800px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:0 1px 0 rgba(17,20,24,.02),0 8px 24px -16px rgba(17,20,24,.08);position:relative;overflow:hidden}
+
+  /* primitives */
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md)}
+  .label{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;display:block}
+  .input{border:1px solid var(--line-2);border-radius:var(--r-sm);background:var(--surface);padding:9px 12px;font-family:var(--sans);font-size:14px;color:var(--ink);display:flex;align-items:center;gap:8px;height:38px}
+  .input .ph{color:var(--ink-4)}
+  .input .end{margin-left:auto;color:var(--ink-3);font-size:12px}
+  .btn{border:1px solid var(--line-2);border-radius:var(--r-sm);padding:0 14px;height:36px;background:var(--surface);font-family:var(--sans);font-size:13px;font-weight:500;color:var(--ink);display:inline-flex;align-items:center;gap:6px;cursor:default}
+  .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .btn.ghost{background:transparent;border-color:transparent}
+  .btn.ok{background:var(--ok-bg);color:var(--ok);border-color:rgba(19,122,61,.25)}
+  .btn.sm{height:30px;padding:0 10px;font-size:12px}
+  .btn.icon{width:32px;padding:0;justify-content:center}
+  .pill{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line-2);border-radius:99px;padding:2px 8px;background:var(--surface);font-family:var(--sans);font-size:11px;line-height:1.6;font-weight:500;color:var(--ink-2)}
+  .badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:12px;font-weight:500;line-height:1;padding:4px 8px;border-radius:var(--r-sm);border:1px solid transparent}
+  .badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+  .badge.ok{color:var(--ok);background:var(--ok-bg);border-color:rgba(19,122,61,.18)}
+  .badge.warn{color:var(--warn);background:var(--warn-bg);border-color:rgba(138,90,0,.18)}
+  .badge.neutral{color:var(--ink-3);background:var(--surface-3);border-color:var(--line)}
+  .badge.accent{color:var(--accent);background:var(--accent-soft);border-color:var(--accent-line)}
+
+  /* sidebar */
+  .app{display:grid;grid-template-columns:228px 1fr;height:800px}
+  .sidebar{border-right:1px solid var(--line);background:var(--surface-2);padding:18px 14px;display:flex;flex-direction:column;gap:2px}
+  .logo{display:flex;align-items:center;gap:10px;padding:6px 8px 16px;margin-bottom:12px;border-bottom:1px solid var(--line)}
+  .logo-mark{width:30px;height:30px;border-radius:var(--r-sm);background:var(--ink);display:grid;place-items:center;color:#fff;font-weight:600;font-size:13px}
+  .logo-name{font-family:var(--sans);font-size:14px;font-weight:600;line-height:1.1}
+  .logo-name small{display:block;font-family:var(--mono);font-size:9px;font-weight:500;color:var(--ink-3);letter-spacing:.16em;margin-top:3px;text-transform:uppercase}
+  .nav-section{font-family:var(--mono);font-size:10px;font-weight:500;color:var(--ink-4);text-transform:uppercase;letter-spacing:.1em;padding:14px 8px 6px}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:var(--r-sm);font-family:var(--sans);font-size:13px;color:var(--ink-2)}
+  .nav-item .ico{width:14px;height:14px;border:1.25px solid var(--ink-3);border-radius:3px;display:inline-block;flex:none}
+  .nav-item .count{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-3)}
+  .nav-item.active{background:var(--surface);color:var(--ink);font-weight:500;box-shadow:inset 0 0 0 1px var(--line)}
+  .nav-item.active .ico{background:var(--ink);border-color:var(--ink)}
+  .nav-spacer{flex:1}
+  .user-card{border-top:1px solid var(--line);padding-top:12px;margin-top:12px;display:flex;align-items:center;gap:10px;font-family:var(--sans);font-size:13px}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--surface-3);border:1px solid var(--line);display:grid;place-items:center;font-family:var(--sans);font-weight:600;font-size:11px;color:var(--ink-2)}
+  .user-card .nm{font-weight:500;color:var(--ink);line-height:1.2}
+  .user-card small{font-family:var(--mono);font-size:9px;color:var(--ink-3);display:block;letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+
+  /* topbar */
+  .topbar{height:56px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;padding:0 24px;background:var(--surface)}
+  .topbar h2{margin:0;font-family:var(--sans);font-size:16px;font-weight:600;line-height:1}
+  .topbar .crumb{font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+  .topbar .spacer{flex:1}
+  .topbar .search-mini{width:280px;height:32px;border:1px solid var(--line-2);border-radius:var(--r-sm);padding:0 10px;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-4);background:var(--surface-2)}
+  .topbar .search-mini .kbd{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--ink-3);border:1px solid var(--line);border-radius:3px;padding:1px 5px;background:var(--surface)}
+  .topbar .userchip{display:flex;align-items:center;gap:8px;padding-left:8px;border-left:1px solid var(--line)}
+  .topbar .userchip .nm{font-size:13px;font-weight:500}
+
+  /* shared table */
+  table.wf{width:100%;border-collapse:collapse;font-family:var(--sans);font-size:13px}
+  table.wf th{text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);padding:10px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+  table.wf td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle;color:var(--ink-2)}
+  table.wf tbody tr:last-child td{border-bottom:none}
+  table.wf tbody tr.highlight td{background:var(--accent-soft)}
+  table.wf td b{color:var(--ink);font-weight:500}
+
+  /* appt rows (agenda behind modal) */
+  .appt-row{display:grid;grid-template-columns:64px 1fr 160px 110px 30px;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);font-size:13px}
+  .appt-row:last-child{border-bottom:none}
+  .appt-row .time{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink)}
+  .appt-row .pat{font-weight:500;color:var(--ink)}
+  .appt-row .pat small{display:block;font-family:var(--mono);font-size:10px;font-weight:400;color:var(--ink-3);margin-top:2px;letter-spacing:.04em;text-transform:uppercase}
+  .appt-row .doc{color:var(--ink-2)}
+  .appt-row .more-icon{color:var(--ink-3);font-size:14px;text-align:center}
+
+  /* ================================
+     MODAL
+     ================================ */
+  .modal-shade{position:absolute;inset:0;background:rgba(17,20,24,.48);backdrop-filter:blur(2px)}
+  .modal{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:600px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--r-lg);
+    box-shadow:0 20px 50px -20px rgba(17,20,24,.35),0 4px 12px rgba(17,20,24,.08);
+    z-index:2;
+  }
+  .modal-head{display:flex;align-items:center;padding:18px 22px;border-bottom:1px solid var(--line)}
+  .modal-head h3{margin:0;font-size:16px;font-weight:600;letter-spacing:-.005em}
+  .modal-head .x{margin-left:auto;width:28px;height:28px;border:1px solid var(--line);border-radius:var(--r-sm);display:grid;place-items:center;color:var(--ink-3)}
+  .modal-body{padding:24px}
+  .modal-foot{border-top:1px solid var(--line);padding:14px 22px;display:flex;justify-content:space-between;align-items:center;background:var(--surface-2);border-radius:0 0 var(--r-lg) var(--r-lg)}
+  .modal-foot .actions{display:flex;gap:8px}
+
+  /* success banner */
+  .success-banner{
+    background:var(--ok-bg);
+    border:1px solid rgba(19,122,61,.2);
+    border-radius:var(--r-md);
+    padding:16px 18px;
+    display:flex; align-items:flex-start; gap:14px;
+    margin-bottom:20px;
+  }
+  .success-icon{
+    width:36px;height:36px;border-radius:50%;
+    background:var(--ok);color:#fff;
+    display:grid;place-items:center;
+    font-size:18px;font-weight:700;flex:none;
+    box-shadow:0 2px 8px rgba(19,122,61,.25);
+  }
+  .success-banner .title{font-weight:600;font-size:15px;color:var(--ok);line-height:1.3;margin-bottom:2px}
+  .success-banner .sub{font-size:13px;color:var(--ok);opacity:.8}
+
+  /* cita summary card */
+  .cita-summary{
+    border:1px solid var(--line);
+    border-radius:var(--r-md);
+    overflow:hidden;
+    margin-bottom:20px;
+  }
+  .cita-summary-head{
+    background:var(--surface-2);
+    border-bottom:1px solid var(--line);
+    padding:10px 14px;
+    font-family:var(--mono);font-size:10px;font-weight:500;color:var(--ink-3);
+    letter-spacing:.08em;text-transform:uppercase;
+  }
+  .cita-row{
+    display:flex;align-items:center;
+    padding:10px 14px;
+    border-bottom:1px solid var(--line);
+    font-size:13px;gap:10px;
+  }
+  .cita-row:last-child{border-bottom:none}
+  .cita-row .lbl{font-family:var(--mono);font-size:10px;color:var(--ink-4);letter-spacing:.06em;text-transform:uppercase;width:110px;flex:none}
+  .cita-row .val{color:var(--ink-2);font-weight:500;color:var(--ink)}
+  .cita-row .val small{font-family:var(--mono);font-size:11px;color:var(--ink-3);font-weight:400;margin-left:8px}
+
+  /* email status row */
+  .email-status{
+    border:1px solid var(--accent-line);
+    border-radius:var(--r-md);
+    background:var(--accent-soft);
+    padding:12px 16px;
+    display:flex;align-items:center;gap:12px;
+    font-size:13px;
+  }
+  .email-dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--accent);flex:none;
+    box-shadow:0 0 0 3px var(--accent-line);
+  }
+  .email-status .addr{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:500}
+  .email-status .ts{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+
+  /* ================================
+     EMAIL TEMPLATE WIREFRAME
+     ================================ */
+  .email-frame{
+    width:1280px;margin:0 auto;
+  }
+  .email-client-chrome{
+    background:#f0f2f5;
+    border:1px solid var(--line);
+    border-radius:var(--r-lg);
+    overflow:hidden;
+    box-shadow:0 1px 0 rgba(17,20,24,.02),0 8px 24px -16px rgba(17,20,24,.08);
+  }
+  .email-client-bar{
+    height:44px;background:#e8eaed;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;gap:8px;padding:0 16px;
+  }
+  .win-btn{width:12px;height:12px;border-radius:50%;background:var(--line-strong)}
+  .win-btn.r{background:#fc5f57}
+  .win-btn.y{background:#febd2e}
+  .win-btn.g{background:#28c840}
+  .url-bar{
+    flex:1;max-width:500px;margin:0 auto;
+    height:26px;background:var(--surface);border:1px solid var(--line-2);
+    border-radius:99px;display:flex;align-items:center;padding:0 12px;
+    font-family:var(--mono);font-size:11px;color:var(--ink-3);gap:6px;
+  }
+  .url-bar .lock{color:var(--ok);font-size:10px}
+
+  .email-layout{
+    display:grid;grid-template-columns:260px 1fr;height:756px;
+  }
+  .email-sidebar{
+    background:var(--surface-2);border-right:1px solid var(--line);
+    padding:16px 12px;
+  }
+  .email-sidebar-head{
+    font-family:var(--sans);font-size:13px;font-weight:600;
+    padding:0 8px 12px;border-bottom:1px solid var(--line);margin-bottom:10px;
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .email-folder{
+    display:flex;align-items:center;gap:8px;
+    padding:6px 8px;border-radius:var(--r-sm);
+    font-size:13px;color:var(--ink-2);
+  }
+  .email-folder .ico{font-size:14px;width:18px;text-align:center;flex:none}
+  .email-folder .cnt{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+  .email-folder.active{background:var(--accent-soft);color:var(--accent);font-weight:500}
+  .email-folder.active .ico{color:var(--accent)}
+
+  .email-list{
+    border-right:1px solid var(--line);
+    overflow:hidden;
+  }
+  .email-list-head{
+    height:48px;border-bottom:1px solid var(--line);
+    display:flex;align-items:center;padding:0 16px;gap:8px;
+    background:var(--surface);
+  }
+  .email-list-head span{font-size:14px;font-weight:600}
+  .email-item{
+    padding:12px 16px;border-bottom:1px solid var(--line);
+    cursor:default;
+  }
+  .email-item:hover{background:var(--surface-2)}
+  .email-item.active{background:var(--accent-soft);border-left:3px solid var(--accent)}
+  .email-item .ei-from{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:2px}
+  .email-item .ei-subj{font-size:13px;color:var(--ink-2);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .email-item .ei-prev{font-size:12px;color:var(--ink-4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .email-item .ei-ts{font-family:var(--mono);font-size:10px;color:var(--ink-3);float:right;margin-top:2px}
+
+  /* email viewer */
+  .email-viewer{
+    display:flex;flex-direction:column;overflow:hidden;
+  }
+  .email-viewer-head{
+    border-bottom:1px solid var(--line);padding:16px 24px;background:var(--surface);
+  }
+  .email-viewer-head h3{margin:0 0 6px;font-size:16px;font-weight:600;letter-spacing:-.005em}
+  .email-viewer-meta{
+    display:flex;align-items:center;gap:10px;font-size:13px;
+  }
+  .email-viewer-meta .av{
+    width:28px;height:28px;border-radius:50%;
+    background:var(--ink);color:#fff;
+    display:grid;place-items:center;
+    font-size:11px;font-weight:600;flex:none;
+  }
+  .email-viewer-meta .from{color:var(--ink-2);font-weight:500}
+  .email-viewer-meta .to{color:var(--ink-4);font-size:12px}
+  .email-viewer-meta .ts{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--ink-3)}
+  .email-viewer-actions{
+    display:flex;gap:6px;margin-left:auto;padding-left:12px;
+  }
+
+  /* the actual email body */
+  .email-body{
+    flex:1;overflow-y:auto;background:#f0f2f5;padding:24px;
+    display:flex;justify-content:center;
+  }
+  .email-card{
+    width:560px;background:var(--surface);
+    border:1px solid var(--line);border-radius:var(--r-lg);
+    overflow:hidden;
+    box-shadow:0 2px 12px rgba(17,20,24,.06);
+  }
+
+  /* email header band */
+  .email-card-header{
+    background:var(--ink);padding:28px 36px;
+    display:flex;align-items:center;gap:14px;
+  }
+  .email-card-header .logo-m{
+    width:40px;height:40px;border-radius:var(--r-md);
+    background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.2);
+    display:grid;place-items:center;
+    font-weight:700;font-size:15px;color:#fff;
+  }
+  .email-card-header .brand{color:#fff}
+  .email-card-header .brand b{display:block;font-size:17px;font-weight:600;letter-spacing:-.01em}
+  .email-card-header .brand small{font-family:var(--mono);font-size:9px;color:rgba(255,255,255,.5);letter-spacing:.2em;text-transform:uppercase}
+
+  /* email hero */
+  .email-hero{
+    background:var(--ok-bg);border-bottom:1px solid rgba(19,122,61,.12);
+    padding:28px 36px;text-align:center;
+  }
+  .email-check{
+    width:52px;height:52px;border-radius:50%;background:var(--ok);
+    display:grid;place-items:center;margin:0 auto 14px;
+    color:#fff;font-size:24px;font-weight:700;
+    box-shadow:0 4px 12px rgba(19,122,61,.3);
+  }
+  .email-hero h2{margin:0 0 6px;font-size:20px;font-weight:700;color:var(--ok);letter-spacing:-.01em}
+  .email-hero p{margin:0;font-size:14px;color:var(--ok);opacity:.75}
+
+  /* email content area */
+  .email-content{padding:28px 36px}
+  .email-content p{margin:0 0 14px;font-size:14px;line-height:1.6;color:var(--ink-2)}
+  .email-content p b{color:var(--ink)}
+
+  /* cita detail box */
+  .cita-box{
+    border:1px solid var(--line);border-radius:var(--r-md);
+    overflow:hidden;margin:20px 0;
+  }
+  .cita-box-head{
+    background:var(--surface-2);border-bottom:1px solid var(--line);
+    padding:10px 16px;
+    font-family:var(--mono);font-size:10px;font-weight:500;
+    color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase;
+  }
+  .cita-box-row{
+    display:flex;padding:10px 16px;border-bottom:1px solid var(--line);
+    font-size:13px;gap:10px;
+  }
+  .cita-box-row:last-child{border-bottom:none}
+  .cita-box-row .r-lbl{
+    width:120px;flex:none;
+    font-family:var(--mono);font-size:10px;color:var(--ink-4);
+    text-transform:uppercase;letter-spacing:.06em;
+    padding-top:1px;
+  }
+  .cita-box-row .r-val{color:var(--ink);font-weight:500;line-height:1.4}
+  .cita-box-row .r-val small{display:block;font-family:var(--mono);font-size:11px;color:var(--ink-3);font-weight:400;margin-top:2px}
+
+  /* CTA button */
+  .email-cta{
+    display:block;width:100%;
+    background:var(--accent);color:#fff;
+    border:none;border-radius:var(--r-sm);
+    padding:13px 0;text-align:center;
+    font-family:var(--sans);font-size:14px;font-weight:600;
+    cursor:default;margin:20px 0;letter-spacing:-.005em;
+  }
+  .email-cta-row{display:flex;gap:10px;margin:18px 0}
+  .email-cta-sec{
+    flex:1;border:1px solid var(--line-2);border-radius:var(--r-sm);
+    padding:10px 12px;text-align:center;
+    font-family:var(--sans);font-size:12px;color:var(--ink-2);font-weight:500;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+  }
+
+  .email-divider{height:1px;background:var(--line);margin:20px 0}
+
+  .email-info-row{
+    display:flex;gap:12px;margin-bottom:14px;
+    align-items:flex-start;
+  }
+  .email-info-row .ico-box{
+    width:32px;height:32px;border-radius:var(--r-sm);
+    background:var(--surface-3);border:1px solid var(--line);
+    display:grid;place-items:center;font-size:15px;flex:none;
+  }
+  .email-info-row .txt{font-size:13px;color:var(--ink-2);line-height:1.5}
+  .email-info-row .txt b{color:var(--ink);display:block;margin-bottom:1px}
+
+  /* email footer */
+  .email-footer{
+    background:var(--surface-2);border-top:1px solid var(--line);
+    padding:20px 36px;text-align:center;
+  }
+  .email-footer p{margin:0 0 6px;font-size:12px;color:var(--ink-4);line-height:1.5}
+  .email-footer .links{display:flex;justify-content:center;gap:16px;font-size:12px;color:var(--accent)}
+
+  /* annotation layer */
+  .ann{
+    position:absolute;
+    font-family:var(--mono);font-size:10px;color:var(--ink-3);
+    background:var(--warn-bg);border:1px solid rgba(138,90,0,.2);
+    border-radius:var(--r-sm);padding:3px 8px;letter-spacing:.04em;
+    white-space:nowrap;z-index:10;
+  }
+
+  /* doc footer */
+  .doc-foot{width:1280px;margin:0 auto;display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--ink-3);padding:0 4px}
+</style>
+</head>
+<body>
+<!-- ========== DOC HEADER ========== -->
+<div class="doc-head">
+<div>
+<p class="doc-eyebrow">MediSync · Clínica San Ángel · Wireframes v2.1</p>
+<h1 class="doc-title">HU-13 — Notificación por correo al agendar cita</h1>
+<p class="doc-sub">
+      Dos pantallas: <b>A)</b> Modal de confirmación que ve el recepcionista tras guardar la cita, con el estado del envío del correo.
+      <b>B)</b> Plantilla del correo que recibe el paciente con todos los detalles de su cita.
+    </p>
+</div>
+<div class="doc-meta">
+<div><b>HU</b> 13 · Notificaciones</div>
+<div><b>Pantallas</b> 08–09 / 09</div>
+<div><b>Rol</b> Recepcionista / Paciente</div>
+<div><b>Fecha</b> 04 may 2026</div>
+</div>
+</div>
+<!-- ===================================================================== -->
+<!-- PANTALLA A — MODAL DE CONFIRMACIÓN (vista recepcionista)              -->
+<!-- ===================================================================== -->
+<div class="screen-wrap">
+<div class="screen-label">
+<span class="screen-num">08 / 09</span>
+<h2 class="screen-name">HU-13A · Modal de confirmación — Cita agendada + correo enviado</h2>
+<span class="screen-tag">/agenda · rol: recepcionista</span>
+</div>
+<div class="screen-rule"></div>
+<div class="screen">
+<div class="app">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+<div class="logo">
+<div class="logo-mark">M+</div>
+<div class="logo-name">MediSync<small>SAN ÁNGEL</small></div>
+</div>
+<div class="nav-section">Principal</div>
+<div class="nav-item"><span class="ico"></span>Inicio</div>
+<div class="nav-item active"><span class="ico"></span>Agenda <span class="count">29</span></div>
+<div class="nav-item"><span class="ico"></span>Pacientes</div>
+<div class="nav-item"><span class="ico"></span>Médicos</div>
+<div class="nav-section">Cuenta</div>
+<div class="nav-item"><span class="ico"></span>Configuración</div>
+<div class="nav-item"><span class="ico"></span>Ayuda</div>
+<div class="nav-spacer"></div>
+<div class="user-card">
+<div class="avatar">ML</div>
+<div><div class="nm">María López</div><small>Recepción</small></div>
+</div>
+</aside>
+<!-- MAIN (agenda detrás del modal) -->
+<main style="position:relative;overflow:hidden">
+<div class="topbar">
+<h2>Agenda</h2>
+<span class="crumb">/ Viernes 16 mayo 2025</span>
+<div class="spacer"></div>
+<div class="search-mini">
+<span>⌕</span><span>Buscar paciente, cita, médico…</span>
+<span class="kbd">⌘ K</span>
+</div>
+<button class="btn icon ghost">⌖</button>
+<div class="userchip"><div class="avatar" style="width:28px;height:28px">ML</div><span class="nm">María L.</span></div>
+</div>
+<!-- agenda content (opacada por el modal shade) -->
+<div style="padding:20px 24px;filter:blur(1px);pointer-events:none;opacity:.5">
+<table class="wf">
+<thead>
+<tr>
+<th style="width:80px">Hora</th>
+<th>Paciente</th>
+<th>Médico</th>
+<th>Especialidad</th>
+<th style="width:110px">Estado</th>
+<th style="width:30px"></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="font-family:var(--mono);font-weight:500">09:00</td>
+<td><b>Carlos Fuentes Mora</b><br/><span style="font-family:var(--mono);font-size:10px;color:var(--ink-3)">MED-0412 · 2da vez</span></td>
+<td>Dr. Castañeda</td><td>Medicina general</td>
+<td><span class="badge ok">Confirmada</span></td>
+<td style="color:var(--ink-3)">⋯</td>
+</tr>
+<tr>
+<td style="font-family:var(--mono);font-weight:500">10:00</td>
+<td><b>Sofía Ramírez Ríos</b><br/><span style="font-family:var(--mono);font-size:10px;color:var(--ink-3)">MED-0089 · seguimiento</span></td>
+<td>Dra. Aguilar</td><td>Pediatría</td>
+<td><span class="badge warn">Pendiente</span></td>
+<td style="color:var(--ink-3)">⋯</td>
+</tr>
+<tr class="highlight">
+<td style="font-family:var(--mono);font-weight:500;color:var(--accent)">11:30</td>
+<td><b>Roberto Hernández Cruz</b><br/><span style="font-family:var(--mono);font-size:10px;color:var(--ink-3)">MED-1052 · 1ra vez</span></td>
+<td>Dr. Mendoza</td><td>Cardiología</td>
+<td><span class="badge ok">Confirmada</span></td>
+<td style="color:var(--ink-3)">⋯</td>
+</tr>
+<tr>
+<td style="font-family:var(--mono);font-weight:500">13:00</td>
+<td><b>Ana Lucía Torres</b><br/><span style="font-family:var(--mono);font-size:10px;color:var(--ink-3)">MED-0301 · 1ra vez</span></td>
+<td>Dra. Treviño</td><td>Dermatología</td>
+<td><span class="badge neutral">Sin confirmar</span></td>
+<td style="color:var(--ink-3)">⋯</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- MODAL SHADE + MODAL -->
+<div class="modal-shade"></div>
+<div class="modal">
+<div class="modal-head">
+<h3>Cita agendada</h3>
+<div class="x">✕</div>
+</div>
+<div class="modal-body">
+<!-- success banner -->
+<div class="success-banner">
+<div class="success-icon">✓</div>
+<div>
+<div class="title">¡Cita registrada exitosamente!</div>
+<div class="sub">La cita fue guardada en el sistema y el correo de confirmación fue enviado al paciente.</div>
+</div>
+</div>
+<!-- resumen de cita -->
+<div class="cita-summary">
+<div class="cita-summary-head">Resumen de cita · ID #MSA-2025-1052</div>
+<div class="cita-row">
+<span class="lbl">Paciente</span>
+<span class="val">Roberto Hernández Cruz <small>MED-1052 · 1ra vez</small></span>
+</div>
+<div class="cita-row">
+<span class="lbl">Fecha y hora</span>
+<span class="val">Viernes 16 mayo 2025, 11:30 h</span>
+</div>
+<div class="cita-row">
+<span class="lbl">Médico</span>
+<span class="val">Dr. Eduardo Mendoza <small>Cardiología · Consultorio 4</small></span>
+</div>
+<div class="cita-row">
+<span class="lbl">Tipo</span>
+<span class="val">Primera consulta <small>Duración estimada: 45 min</small></span>
+</div>
+<div class="cita-row">
+<span class="lbl">Modalidad</span>
+<span class="val">Presencial</span>
+</div>
+</div>
+<!-- estado del correo -->
+<div style="margin-bottom:6px">
+<span class="label">Estado del correo de confirmación</span>
+<div class="email-status">
+<div class="email-dot"></div>
+<div>
+<div style="font-size:13px;font-weight:500;color:var(--ink);margin-bottom:1px">Enviado correctamente</div>
+<div class="addr">r.hernandez@gmail.com</div>
+</div>
+<div class="ts">hoy, 10:42 a.m.</div>
+</div>
+</div>
+<!-- nota adicional -->
+<div style="background:var(--surface-3);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 14px;font-size:12px;color:var(--ink-3);display:flex;gap:8px;align-items:flex-start">
+<span style="font-size:14px;flex:none">💡</span>
+<span>Si el paciente no recibe el correo en los próximos 5 minutos, puedes <b style="color:var(--accent)">reenviar el correo</b> desde las opciones de la cita.</span>
+</div>
+</div>
+<div class="modal-foot">
+<div style="font-size:12px;color:var(--ink-3)">ID de cita: <span style="font-family:var(--mono);color:var(--ink)">#MSA-2025-1052</span></div>
+<div class="actions">
+<button class="btn sm">Reenviar correo</button>
+<button class="btn sm">Ver en agenda</button>
+<button class="btn primary sm">+ Nueva cita</button>
+</div>
+</div>
+</div><!-- /modal -->
+</main>
+</div><!-- /app -->
+</div><!-- /screen -->
+</div>
+<!-- ===================================================================== -->
+<!-- PANTALLA B — TEMPLATE DEL CORREO (vista paciente)                    -->
+<!-- ===================================================================== -->
+
+<footer class="doc-foot">
+<span>MediSync · Clínica San Ángel — wireframes v2.1 · HU-13</span>
+<span>04 mayo 2026 · pantalla 08 · 1280×800</span>
+</footer>
+</body>
+</html>
