@@ -40,7 +40,9 @@ Verificacion de conexion exitosa:
     git clone https://github.com/HenriqueAlvarado/Proyecto_Final_Equipo3.git
 
 ERROR ENCONTRADO: Al intentar hacer push, el repositorio remoto tenia commits
-que no existian localmente (el archivo MediSync_Wireframes.html).
+que no existian localmente (el archivo MediSync_Wireframes.html) esto fue 
+porque mi compañero luis ya habia hecho un commit pero yo no hice un pull 
+para actualizar mi repositorio.
 SOLUCION: Se ejecuto git pull con merge automatico:
     git commit -m "Merge branch main..."
     git push -u origin main
@@ -472,10 +474,12 @@ Solucion: Asignar una Elastic IP real (3.219.251.228) al EC2.
 
 ERROR 4: ERR_SSL_PROTOCOL_ERROR en celular
 Descripcion: Chrome en movil fuerza HTTPS automaticamente. El S3 static hosting
-             solo sirve HTTP, causando ERR_SSL_PROTOCOL_ERROR.
-Solucion parcial: Usar Firefox o escribir http:// explicitamente.
-Solucion permanente pendiente: CloudFront (no disponible en AWS Academy) o
-             servir desde EC2 con Nginx + certificado SSL.
+             solo sirve HTTP, causando ERR_SSL_PROTOCOL_ERROR en Chrome movil.
+Solucion: Usar un navegador que respete HTTP sin forzar HTTPS, como Firefox
+             o Samsung Internet. El sistema funciona correctamente en HTTP.
+             No se requiere cambiar a HTTPS para el alcance del proyecto.
+Nota: Esta es una limitacion de ciertos navegadores moviles, no del sistema.
+      El frontend en S3 HTTP es la arquitectura definitiva para este proyecto.
 
 ERROR 5: CORS timeout
 Descripcion: El frontend recibia "timeout of 10000ms exceeded" al intentar
@@ -568,7 +572,6 @@ Infraestructura AWS:
 
 Pendiente para MVP completo:
 [ ] Configurar SendGrid API Key para envio de correos (HU-13)
-[ ] Solucion HTTPS para acceso desde celular
 [ ] Datos de prueba en la base de datos
 
 

@@ -227,11 +227,6 @@ doctorService.js:
 
 4.1 Tecnicos
 --------------
-[ ] HTTPS para el frontend
-    - CloudFront no disponible en AWS Academy
-    - Alternativa: Nginx en EC2 con certificado autofirmado o Let's Encrypt
-    - Impacto: sin HTTPS, Chrome movil bloquea la pagina
-
 [ ] SendGrid configurado
     - Crear cuenta en sendgrid.com (free tier: 100 correos/dia)
     - Generar API Key
@@ -396,9 +391,11 @@ Descripcion: Al intentar crear una distribucion CloudFront para habilitar
              HTTPS en el frontend, AWS Academy retorna AccessDenied.
 Mensaje: "User is not authorized to perform: cloudfront:CreateDistribution"
 Impacto: El frontend solo sirve HTTP. Chrome movil fuerza HTTPS y bloquea
-         la pagina con ERR_SSL_PROTOCOL_ERROR.
-Solucion temporal: Usar Firefox en movil o escribir http:// explicitamente.
-Solucion permanente pendiente: Configurar Nginx en EC2 con SSL.
+         la pagina con ERR_SSL_PROTOCOL_ERROR en ese navegador especifico.
+Solucion adoptada: El sistema se mantiene en HTTP. Navegadores como Firefox
+         y Samsung Internet respetan HTTP sin forzar HTTPS, por lo que el
+         acceso desde celular es posible usando esos navegadores.
+         No se requiere HTTPS para el alcance del proyecto.
 
 ERROR 2: CORS con origin "*" como string no funciona
 Descripcion: Express no acepta el string "*" en la opcion origin de CORS
@@ -434,7 +431,11 @@ Solucion: Detener el proceso anterior con action: "stop" y crear uno nuevo,
 --------------------------------------------
 - Amplify no esta soportado en AWS Academy
 - S3 static hosting es la alternativa directa y soportada
-- Limitacion: solo HTTP, no HTTPS nativo
+- El sistema opera en HTTP, lo cual es aceptable para el entorno de laboratorio
+- Navegadores modernos de escritorio y moviles como Firefox y Samsung Internet
+  acceden sin problema via HTTP
+- Chrome movil fuerza HTTPS en algunos casos, pero esto es una limitacion
+  del navegador, no del sistema. La decision es mantener HTTP.
 
 9.3 Por que JWT y no Cognito
 ------------------------------
