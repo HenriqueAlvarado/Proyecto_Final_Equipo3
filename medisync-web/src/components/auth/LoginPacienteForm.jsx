@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import Input from '../common/Input';
 import Button from '../common/Button';
 
 const LoginPacienteForm = () => {
   const { loginPaciente } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
@@ -26,6 +28,7 @@ const LoginPacienteForm = () => {
     setLoading(true);
     try {
       await loginPaciente(form.email, form.password);
+      navigate('/mis-citas', { replace: true });
     } catch (err) {
       setServerError(err.message || 'Credenciales incorrectas');
     } finally {

@@ -30,6 +30,15 @@ const ProtectedLayout = ({ children }) => {
   );
 };
 
+// Redireccion inteligente segun rol
+const HomeRedirect = () => {
+  const { user, loading } = useAuth();
+  if (loading) return <div style={{ padding: '40px', textAlign: 'center' }}>Cargando...</div>;
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.rol === 'paciente') return <Navigate to="/mis-citas" replace />;
+  return <Navigate to="/dashboard" replace />;
+};
+
 const AppRoutes = () => (
   <Routes>
     <Route path="/login" element={<LoginPage />} />
@@ -39,7 +48,7 @@ const AppRoutes = () => (
     <Route path="/medicos" element={<ProtectedLayout><DoctorsPage /></ProtectedLayout>} />
     <Route path="/usuarios" element={<ProtectedLayout><UsersPage /></ProtectedLayout>} />
     <Route path="/mis-citas" element={<ProtectedLayout><MisCitasPage /></ProtectedLayout>} />
-    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+    <Route path="/" element={<HomeRedirect />} />
     <Route path="*" element={<NotFoundPage />} />
   </Routes>
 );
