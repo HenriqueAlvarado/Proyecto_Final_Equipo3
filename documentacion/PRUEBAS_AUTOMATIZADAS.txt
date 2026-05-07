@@ -1,0 +1,398 @@
+﻿================================================================================
+MEDISYNC - CLINICA SAN ANGEL
+RESULTADOS DE PRUEBAS AUTOMATIZADAS
+================================================================================
+Proyecto:      MediSync - Sistema de Gestion de Citas Medicas
+Desarrollador: Henrique Alejandro Alvarado Castillo
+Fecha:         7 de Mayo de 2026
+Entrega:       MVP - Entrega 2
+================================================================================
+
+RESUMEN EJECUTIVO
+-----------------
+Total de pruebas:   30
+Pruebas pasadas:    30
+Pruebas fallidas:   0
+Cobertura:          Middleware de autenticacion, Servicio de email,
+                    Validadores de formularios, Formateadores de datos
+
+Frameworks utilizados:
+  Backend:   Jest 29.7 + Supertest 6.3 (Node.js)
+  Frontend:  Jest (incluido en react-scripts 5.0 / Create React App)
+
+Comandos para ejecutar las pruebas:
+  Backend:   cd medisync-backend  && npm test
+  Frontend:  cd medisync-web      && npm test
+
+
+================================================================================
+SUITE 1 - MIDDLEWARE DE AUTENTICACION (Backend)
+================================================================================
+Archivo de prueba: medisync-backend/src/tests/auth.middleware.test.js
+Modulo probado:    src/middleware/auth.middleware.js
+
+Descripcion:
+  El middleware de autenticacion es el componente mas critico del sistema.
+  Protege todos los endpoints de la API verificando que el JWT sea valido
+  y que el usuario tenga el rol requerido. Estas pruebas garantizan que
+  ningun usuario no autorizado pueda acceder a los datos del sistema.
+
+--------------------------------------------------------------------------------
+TC-01 | Sin token → responde 401
+--------------------------------------------------------------------------------
+Descripcion:    Peticion sin header Authorization
+Input:          req.headers = {} (sin Authorization)
+Resultado esp.: HTTP 401, body { message: 'Token no proporcionado' }
+Resultado real: HTTP 401, body { message: 'Token no proporcionado' }
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-02 | Token sin prefijo Bearer → responde 401
+--------------------------------------------------------------------------------
+Descripcion:    Header Authorization presente pero sin el prefijo "Bearer "
+Input:          Authorization: "tokensinprefijo"
+Resultado esp.: HTTP 401
+Resultado real: HTTP 401
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-03 | Token con firma invalida → responde 401
+--------------------------------------------------------------------------------
+Descripcion:    Token con estructura JWT pero firmado con clave incorrecta
+Input:          Authorization: "Bearer token.invalido.firma"
+Resultado esp.: HTTP 401, body { message: 'Token invalido o expirado' }
+Resultado real: HTTP 401, body { message: 'Token invalido o expirado' }
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-04 | Token valido → llama next() y puebla req.user
+--------------------------------------------------------------------------------
+Descripcion:    Token JWT firmado correctamente con JWT_SECRET
+Input:          Token generado con payload { id:1, rol:'recepcionista' }
+Resultado esp.: next() llamado 1 vez, req.user contiene el payload
+Resultado real: next() llamado 1 vez, req.user = { id:1, rol:'recepcionista' }
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-05 | requireRole con rol permitido → llama next()
+--------------------------------------------------------------------------------
+Descripcion:    Usuario con rol 'director' accede a ruta que permite director
+Input:          req.user = { rol: 'director' }, roles permitidos: ['director','recepcionista']
+Resultado esp.: next() llamado 1 vez, sin respuesta HTTP
+Resultado real: next() llamado 1 vez
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-06 | requireRole con rol no permitido → responde 403
+--------------------------------------------------------------------------------
+Descripcion:    Paciente intenta acceder a ruta restringida a staff
+Input:          req.user = { rol: 'paciente' }, roles permitidos: ['director','recepcionista']
+Resultado esp.: HTTP 403, body { message: 'No tienes permisos para esta accion' }
+Resultado real: HTTP 403, body { message: 'No tienes permisos para esta accion' }
+Estado:         PASS ✓
+
+Resultado suite: 6/6 pruebas pasadas
+
+
+================================================================================
+SUITE 2 - SERVICIO DE EMAIL SENDGRID (Backend)
+================================================================================
+Archivo de prueba: medisync-backend/src/tests/email.service.test.js
+Modulo probado:    src/services/email.service.js
+
+Descripcion:
+  El servicio de email implementa la HU-13 (notificacion por correo al
+  agendar cita). Las pruebas verifican el comportamiento en escenarios
+  de configuracion incompleta y el payload enviado a la API de SendGrid.
+  Se usa jest.mock('axios') para no realizar llamadas reales a SendGrid.
+
+--------------------------------------------------------------------------------
+TC-07 | Sin API Key → no llama a axios
+--------------------------------------------------------------------------------
+Descripcion:    SENDGRID_API_KEY no esta en las variables de entorno
+Input:          process.env.SENDGRID_API_KEY = undefined
+Resultado esp.: axios.post no es llamado, funcion retorna sin error
+Resultado real: axios.post no llamado, resuelve con undefined
+Estado:         PASS ✓
+Nota:           El sistema imprime warning en consola pero no falla,
+                permitiendo que el resto del sistema funcione sin correos.
+
+--------------------------------------------------------------------------------
+TC-08 | Sin email del paciente → no llama a axios
+--------------------------------------------------------------------------------
+Descripcion:    Cita sin email del paciente (campo undefined)
+Input:          cita = { ...datosCompletos, paciente_email: undefined }
+Resultado esp.: axios.post no es llamado
+Resultado real: axios.post no llamado
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-09 | Datos completos → llama a axios con payload correcto
+--------------------------------------------------------------------------------
+Descripcion:    Todos los datos presentes, verifica estructura del payload
+Input:          cita completa con email, nombre paciente, nombre medico, fecha, hora, motivo
+Resultado esp.: axios.post llamado 1 vez con URL, destinatario, remitente y contenido correctos
+Resultado real: axios.post llamado con:
+                  URL: https://api.sendgrid.com/v3/mail/send
+                  to[0].email: 'paciente@gmail.com'
+                  from.email: 'test@clinica.com' (SENDGRID_FROM)
+                  content contiene nombre del paciente y del medico
+                  Authorization: 'Bearer SG.test_key'
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-10 | Error de axios → propaga el error
+--------------------------------------------------------------------------------
+Descripcion:    SendGrid retorna error de red
+Input:          axios.post rechaza con Error('Network Error')
+Resultado esp.: sendAppointmentEmail rechaza con el mismo error
+Resultado real: Promesa rechazada con Error('Network Error')
+Estado:         PASS ✓
+Nota:           El caller (citas.routes.js) captura este error con .catch()
+                para que no bloquee la respuesta HTTP al cliente.
+
+Resultado suite: 4/4 pruebas pasadas
+
+
+================================================================================
+SUITE 3 - VALIDADORES DE FORMULARIOS (Frontend)
+================================================================================
+Archivo de prueba: medisync-web/src/tests/validators.test.js
+Modulo probado:    src/utils/validators.js
+
+Descripcion:
+  Los validadores son usados en todos los formularios del sistema
+  (login, registro de pacientes, registro de usuarios, creacion de citas).
+  Estas pruebas garantizan que las validaciones del lado del cliente
+  funcionan correctamente antes de enviar datos al backend.
+
+--------------------------------------------------------------------------------
+TC-11 | isValidEmail con email valido → true
+--------------------------------------------------------------------------------
+Input:          'henrique.alvarado@gmail.com', 'recep@clinicasanangel.com'
+Resultado esp.: true
+Resultado real: true
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-12 | isValidEmail con email invalido → false
+--------------------------------------------------------------------------------
+Input:          'noesuncorreo', 'falta@dominio', '@sinusuario.com', ''
+Resultado esp.: false para todos
+Resultado real: false para todos
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-13 | isValidPhone con 10 digitos → true
+--------------------------------------------------------------------------------
+Input:          '8112345678', '811-234-5678', '811 234 5678'
+Resultado esp.: true (acepta guiones y espacios)
+Resultado real: true para todos
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-14 | isValidPhone con digitos incorrectos → false
+--------------------------------------------------------------------------------
+Input:          '81123456' (8 dig), '81123456789' (11 dig), 'abcdefghij'
+Resultado esp.: false para todos
+Resultado real: false para todos
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-15 | isValidCURP con formato valido → true
+--------------------------------------------------------------------------------
+Input:          'AACH900101HNLRVR09', 'GARM850315MDFRZR01'
+Resultado esp.: true
+Resultado real: true
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-16 | isValidCURP con formato invalido → false
+--------------------------------------------------------------------------------
+Input:          '12345678901234567', 'CORTO', ''
+Resultado esp.: false para todos
+Resultado real: false para todos
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-17 | isNotEmpty con valor con texto → true
+--------------------------------------------------------------------------------
+Input:          'Henrique', '  texto con espacios  '
+Resultado esp.: true
+Resultado real: true
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-18 | isNotEmpty con valor vacio, null o undefined → false
+--------------------------------------------------------------------------------
+Input:          '', '   ', null, undefined
+Resultado esp.: false para todos
+Resultado real: false para todos
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-19 | minLength cumple longitud minima → true
+--------------------------------------------------------------------------------
+Input:          minLength('password123', 8), minLength('abcdef', 6), minLength('exacto', 6)
+Resultado esp.: true para todos
+Resultado real: true para todos
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-20 | minLength no cumple longitud minima → falsy
+--------------------------------------------------------------------------------
+Input:          minLength('corto', 8), minLength('abc', 6), minLength('', 1)
+Resultado esp.: false o falsy para todos
+Resultado real: false, false, '' (todos falsy)
+Estado:         PASS ✓
+Nota tecnica:   minLength('', 1) retorna '' porque la implementacion usa
+                value && value.length >= min. El string vacio es falsy,
+                por lo que el resultado es correcto funcionalmente aunque
+                no sea el booleano false estricto.
+
+Resultado suite: 10/10 pruebas pasadas
+
+
+================================================================================
+SUITE 4 - FORMATEADORES DE DATOS (Frontend)
+================================================================================
+Archivo de prueba: medisync-web/src/tests/formatters.test.js
+Modulo probado:    src/utils/formatters.js
+
+Descripcion:
+  Los formateadores convierten datos crudos de la API (fechas ISO, horas
+  en formato 24h) a formatos legibles para el usuario en la interfaz.
+  Se usan en AgendaView, MisCitasPage y PatientList.
+
+--------------------------------------------------------------------------------
+TC-21 | formatDate con fecha valida → formato legible en espanol
+--------------------------------------------------------------------------------
+Input:          '2026-05-07'
+Resultado esp.: String que contiene '7', 'mayo' y '2026'
+Resultado real: '07 de mayo de 2026'
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-22 | formatDate con valor vacio o null → retorna ''
+--------------------------------------------------------------------------------
+Input:          '', null, undefined
+Resultado esp.: '' para todos
+Resultado real: '' para todos
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-23 | formatTime con hora AM (09:30) → '9:30 AM'
+--------------------------------------------------------------------------------
+Input:          '09:30'
+Resultado esp.: '9:30 AM'
+Resultado real: '9:30 AM'
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-24 | formatTime con hora PM (14:45) → '2:45 PM'
+--------------------------------------------------------------------------------
+Input:          '14:45'
+Resultado esp.: '2:45 PM'
+Resultado real: '2:45 PM'
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-25 | formatTime con medianoche (00:00) → '12:00 AM'
+--------------------------------------------------------------------------------
+Input:          '00:00'
+Resultado esp.: '12:00 AM'
+Resultado real: '12:00 AM'
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-26 | formatTime con mediodia (12:00) → '12:00 PM'
+--------------------------------------------------------------------------------
+Input:          '12:00'
+Resultado esp.: '12:00 PM'
+Resultado real: '12:00 PM'
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-27 | formatTime con valor vacio → retorna ''
+--------------------------------------------------------------------------------
+Input:          '', null
+Resultado esp.: ''
+Resultado real: ''
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-28 | formatFullName con nombre y apellido → concatena con espacio
+--------------------------------------------------------------------------------
+Input:          formatFullName('Henrique', 'Alvarado')
+Resultado esp.: 'Henrique Alvarado'
+Resultado real: 'Henrique Alvarado'
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-29 | formatFullName con solo nombre → retorna solo el nombre
+--------------------------------------------------------------------------------
+Input:          formatFullName('Henrique', ''), formatFullName('Henrique', null)
+Resultado esp.: 'Henrique'
+Resultado real: 'Henrique'
+Estado:         PASS ✓
+
+--------------------------------------------------------------------------------
+TC-30 | formatFullName con ambos vacios → retorna ''
+--------------------------------------------------------------------------------
+Input:          formatFullName('', ''), formatFullName(null, null)
+Resultado esp.: ''
+Resultado real: ''
+Estado:         PASS ✓
+
+Resultado suite: 10/10 pruebas pasadas
+
+
+================================================================================
+RESUMEN FINAL
+================================================================================
+
+Suite                                   Pruebas  Pasadas  Fallidas
+--------------------------------------  -------  -------  --------
+Suite 1 - Middleware de Autenticacion       6        6        0
+Suite 2 - Servicio de Email SendGrid        4        4        0
+Suite 3 - Validadores de Formularios       10       10        0
+Suite 4 - Formateadores de Datos           10       10        0
+--------------------------------------  -------  -------  --------
+TOTAL                                      30       30        0
+
+Resultado global: TODAS LAS PRUEBAS PASARON ✓
+
+Output real de Jest:
+  Backend:
+    PASS  src/tests/auth.middleware.test.js
+    PASS  src/tests/email.service.test.js
+    Tests: 10 passed, 10 total
+    Time:  2.856s
+
+  Frontend:
+    PASS  src/tests/formatters.test.js
+    PASS  src/tests/validators.test.js
+    Tests: 20 passed, 20 total
+    Time:  8.07s
+
+
+================================================================================
+ARCHIVOS DE PRUEBA
+================================================================================
+
+Backend (Jest + Supertest):
+  medisync-backend/src/tests/auth.middleware.test.js
+  medisync-backend/src/tests/email.service.test.js
+
+Frontend (Jest / Create React App):
+  medisync-web/src/tests/validators.test.js
+  medisync-web/src/tests/formatters.test.js
+
+
+================================================================================
+FIN DE DOCUMENTO DE PRUEBAS
+================================================================================
+Desarrollador: Henrique Alejandro Alvarado Castillo
+Proyecto: MediSync - Clinica San Angel
+Fecha: 7 de Mayo de 2026
+================================================================================
