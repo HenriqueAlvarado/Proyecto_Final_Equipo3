@@ -70,8 +70,23 @@ router.post('/', async (req, res) => {
 
     const cita = result.rows[0];
 
+    // Obtener datos completos para el correo (el INSERT solo devuelve IDs)
+    const citaCompleta = await pool.query(
+      `SELECT c.fecha, c.hora, c.motivo,
+              p.nombre || ' ' || p.apellido AS paciente_nombre, p.email AS paciente_email,
+              u.nombre || ' ' || u.apellido AS medico_nombre
+       FROM citas c
+       JOIN pacientes p ON c.paciente_id = p.id
+       JOIN medicos m ON c.medico_id = m.id
+       JOIN usuarios u ON m.usuario_id = u.id
+       WHERE c.id = $1`,
+      [cita.id]
+    );
+
     // Enviar correo de confirmación (no bloquea la respuesta)
-    sendAppointmentEmail(cita).catch(err => console.error('Error enviando correo:', err));
+    if (citaCompleta.rows.length > 0) {
+      sendAppointmentEmail(citaCompleta.rows[0]).catch(err => console.error('Error enviando correo:', err));
+    }
 
     res.status(201).json(cita);
   } catch (err) {
