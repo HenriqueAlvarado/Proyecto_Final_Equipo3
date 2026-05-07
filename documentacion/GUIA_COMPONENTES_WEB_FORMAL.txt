@@ -1,0 +1,1011 @@
+﻿================================================================================
+MEDISYNC - CLINICA SAN ANGEL
+GUIA FORMAL DE COMPONENTES WEB
+================================================================================
+Proyecto:      MediSync - Sistema de Gestion de Citas Medicas
+Clinica:       Clinica San Angel
+Desarrollador: Henrique Alejandro Alvarado Castillo
+Rol:           Desarrollador Web / Product Owner
+Fecha:         Mayo 2026
+Version:       2.0 (Entrega Final)
+================================================================================
+
+INDICE
+------
+1.  Stack Tecnologico
+2.  Sistema de Diseno
+3.  Arquitectura de la Aplicacion
+4.  Componentes Comunes
+5.  Componentes de Autenticacion
+6.  Componentes de Citas
+7.  Componentes de Pacientes
+8.  Componentes de Medicos
+9.  Componentes de Usuarios
+10. Componentes de Dashboard
+11. Paginas y Rutas
+12. Servicios API
+13. Contexto y Hooks
+14. Utilidades
+15. Variables de Entorno
+16. Build y Deploy
+
+
+================================================================================
+1. STACK TECNOLOGICO
+================================================================================
+
+Libreria principal:  React 18 (JavaScript)
+Enrutamiento:        React Router v6
+Cliente HTTP:        Axios 1.x
+Estilos:             CSS puro con variables CSS (sin frameworks externos)
+Gestor de paquetes:  npm
+Bundler:             Create React App (react-scripts)
+Despliegue:          AWS S3 Static Website Hosting
+
+URL de produccion:
+  http://medisync-web-20260501.s3-website-us-east-1.amazonaws.com
+
+Backend API:
+  http://3.219.251.228:3000/api
+
+
+================================================================================
+2. SISTEMA DE DISENO
+================================================================================
+
+2.1 Paleta de Colores
+----------------------
+Definidas en: src/assets/styles/variables.css
+
+Variable                Valor       Uso
+----------------------  ----------  ------------------------------------------
+--color-primary         #1a73e8     Botones principales, links, sidebar activo
+--color-primary-dark    #1557b0     Hover de botones primarios
+--color-secondary       #34a853     Botones secundarios, badges completado
+--color-danger          #ea4335     Botones eliminar/cancelar, errores
+--color-warning         #fbbc04     Alertas y advertencias
+--color-white           #ffffff     Fondos de cards y modales
+--color-gray-100        #f8f9fa     Fondo general de la aplicacion
+--color-gray-200        #e8eaed     Bordes suaves
+--color-gray-300        #dadce0     Bordes de inputs
+--color-gray-700        #5f6368     Texto secundario, labels
+--color-gray-900        #202124     Texto principal
+
+2.2 Tipografia
+---------------
+Familia: Inter, Segoe UI, sans-serif
+
+Variable            Valor       Equivalente  Uso
+------------------  ----------  -----------  --------------------------------
+--font-size-xs      0.75rem     12px         Badges, mensajes de error
+--font-size-sm      0.875rem    14px         Texto de tabla, labels
+--font-size-md      1rem        16px         Texto general, inputs
+--font-size-lg      1.125rem    18px         Subtitulos de seccion
+--font-size-xl      1.25rem     20px         Titulos de card
+--font-size-2xl     1.5rem      24px         Titulos de pagina
+--font-size-3xl     1.875rem    30px         Numeros grandes en dashboard
+
+2.3 Espaciado
+--------------
+Variable        Valor   Uso tipico
+--------------  ------  ------------------------------------------
+--spacing-xs    4px     Separacion minima entre elementos
+--spacing-sm    8px     Padding interno de badges
+--spacing-md    16px    Padding de cards, separacion entre campos
+--spacing-lg    24px    Separacion entre secciones
+--spacing-xl    32px    Padding de paginas
+--spacing-2xl   48px    Separacion mayor entre bloques
+
+2.4 Layout Principal
+---------------------
+--sidebar-width:  240px  (sidebar lateral fijo)
+--navbar-height:  64px   (barra superior fija)
+
+Estructura:
+  - Navbar fija en la parte superior (z-index alto)
+  - Sidebar fijo a la izquierda, debajo del navbar
+  - Contenido principal con margin-left: 240px y padding-top: 64px
+  - Implementado con Flexbox
+
+
+================================================================================
+3. ARQUITECTURA DE LA APLICACION
+================================================================================
+
+src/
+├── assets/
+│   └── styles/
+│       ├── variables.css     Variables CSS globales (colores, tipografia, espaciado)
+│       └── global.css        Estilos base y reset
+├── components/
+│   ├── common/               Componentes reutilizables en toda la app
+│   ├── auth/                 Formularios de autenticacion
+│   ├── appointments/         Gestion de citas medicas
+│   ├── patients/             Gestion de pacientes
+│   ├── doctors/              Visualizacion de medicos
+│   ├── users/                Gestion de usuarios del sistema
+│   └── dashboard/            Panel de estadisticas
+├── contexts/
+│   └── AuthContext.jsx       Estado global de autenticacion
+├── hooks/
+│   ├── useAuth.js            Acceso al contexto de autenticacion
+│   └── useForm.js            Manejo generico de formularios
+├── pages/                    Paginas completas (combinan componentes)
+├── services/                 Llamadas a la API REST
+│   ├── api.js                Instancia Axios configurada
+│   ├── authService.js        Endpoints de autenticacion y usuarios
+│   ├── appointmentService.js Endpoints de citas
+│   ├── patientService.js     Endpoints de pacientes
+│   └── doctorService.js      Endpoints de medicos
+├── utils/
+│   ├── validators.js         Funciones de validacion
+│   └── formatters.js         Funciones de formato de datos
+├── App.jsx                   Definicion de rutas y estructura principal
+└── index.js                  Punto de entrada de la aplicacion
+
+
+
+================================================================================
+4. COMPONENTES COMUNES (src/components/common/)
+================================================================================
+
+Estos componentes son la base del sistema de diseno. Se usan en toda la
+aplicacion para garantizar consistencia visual y de comportamiento.
+
+--------------------------------------------------------------------------------
+4.1 Button.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Boton reutilizable con soporte para multiples variantes visuales, tamanos
+  y estado de carga. Cubre todos los casos de uso de la aplicacion.
+
+Props:
+  Prop        Tipo        Default     Descripcion
+  ----------  ----------  ----------  ----------------------------------------
+  children    ReactNode   -           Contenido del boton (texto o icono)
+  variant     string      'primary'   Estilo visual del boton
+  size        string      'md'        Tamano del boton
+  disabled    boolean     false       Deshabilita interaccion
+  loading     boolean     false       Muestra spinner y deshabilita el boton
+  onClick     function    -           Manejador del evento clic
+  type        string      'button'    Tipo HTML (button, submit, reset)
+  fullWidth   boolean     false       Ocupa el 100% del ancho disponible
+
+Variantes (variant):
+  'primary'   Fondo azul (#1a73e8), texto blanco. Accion principal.
+  'secondary' Fondo verde (#34a853), texto blanco. Accion secundaria.
+  'danger'    Fondo rojo (#ea4335), texto blanco. Acciones destructivas.
+  'outline'   Fondo transparente, borde y texto azul. Accion alternativa.
+
+Tamanos (size):
+  'sm'  Padding reducido, fuente 14px. Para tablas y espacios compactos.
+  'md'  Padding estandar, fuente 16px. Uso general.
+  'lg'  Padding amplio, fuente 18px. Llamadas a accion destacadas.
+
+Accesibilidad:
+  - aria-disabled="true" cuando loading o disabled es true
+  - El spinner incluye aria-hidden="true" para no ser leido por lectores
+  - Mantiene el foco visible con outline en modo teclado
+
+Ejemplos de uso:
+  <Button variant="primary" type="submit" loading={isLoading}>
+    Guardar
+  </Button>
+
+  <Button variant="danger" size="sm" onClick={handleDelete}>
+    Eliminar
+  </Button>
+
+  <Button variant="outline" fullWidth onClick={handleCancel}>
+    Cancelar
+  </Button>
+
+--------------------------------------------------------------------------------
+4.2 Input.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Campo de entrada controlado con label integrado, validacion visual y
+  soporte completo de accesibilidad.
+
+Props:
+  Prop         Tipo      Default   Descripcion
+  -----------  --------  --------  --------------------------------------------
+  id           string    -         REQUERIDO. Vincula label con input
+  label        string    -         Texto de la etiqueta visible
+  error        string    -         Mensaje de error (activa estado de error)
+  type         string    'text'    Tipo HTML del input
+  placeholder  string    -         Texto de ayuda dentro del campo
+  value        string    -         Valor controlado
+  onChange     function  -         Manejador de cambio de valor
+  required     boolean   false     Muestra asterisco (*) en el label
+  disabled     boolean   false     Deshabilita el campo
+
+Estados visuales:
+  Normal:  Borde gris (#dadce0)
+  Focus:   Borde azul (#1a73e8) con sombra suave
+  Error:   Borde rojo (#ea4335), mensaje de error debajo en rojo
+  Disabled: Fondo gris claro, cursor not-allowed
+
+Accesibilidad:
+  - aria-invalid="true" cuando hay mensaje de error
+  - aria-describedby apunta al elemento con el mensaje de error
+  - Label siempre asociado al input via htmlFor/id
+
+Ejemplo de uso:
+  <Input
+    id="email"
+    label="Correo electronico"
+    type="email"
+    value={form.email}
+    onChange={(e) => handleChange('email', e.target.value)}
+    error={errors.email}
+    required
+  />
+
+--------------------------------------------------------------------------------
+4.3 Card.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Contenedor visual con fondo blanco, bordes redondeados y sombra suave.
+  Agrupa contenido relacionado en la interfaz.
+
+Props:
+  Prop       Tipo       Default  Descripcion
+  ---------  ---------  -------  ----------------------------------------------
+  children   ReactNode  -        Contenido de la card
+  title      string     -        Titulo opcional con linea separadora debajo
+  className  string     -        Clases CSS adicionales para personalizacion
+
+Ejemplo de uso:
+  <Card title="Informacion del paciente">
+    <p>Nombre: Juan Garcia</p>
+    <p>Correo: juan@email.com</p>
+  </Card>
+
+--------------------------------------------------------------------------------
+4.4 Navbar.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Barra de navegacion superior fija. Muestra la identidad del sistema y
+  los datos del usuario autenticado con opcion de cerrar sesion.
+
+Props: Ninguna (obtiene datos del AuthContext via useAuth())
+
+Contenido mostrado:
+  - Logo e icono del sistema (lado izquierdo)
+  - Nombre del sistema "MediSync" y nombre de la clinica (centro-izquierda)
+  - Nombre completo del usuario autenticado (lado derecho)
+  - Rol del usuario en formato legible (lado derecho)
+  - Boton "Cerrar sesion" (lado derecho)
+
+Comportamiento:
+  - Al hacer clic en "Cerrar sesion" llama a logout() del AuthContext
+  - Redirige automaticamente a /login tras cerrar sesion
+
+--------------------------------------------------------------------------------
+4.5 Sidebar.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Menu de navegacion lateral fijo. Muestra solo los items accesibles
+  segun el rol del usuario autenticado.
+
+Props: Ninguna (obtiene datos del AuthContext via useAuth())
+
+Items de navegacion por rol:
+  Rol               Items visibles
+  ----------------  --------------------------------------------------
+  recepcionista     Dashboard, Agenda, Pacientes, Medicos
+  medico            Dashboard, Agenda
+  director          Dashboard, Medicos, Usuarios
+  paciente          Mis Citas
+
+Comportamiento:
+  - Usa NavLink de React Router para resaltar la ruta activa
+  - La ruta activa muestra borde izquierdo azul y fondo azul claro
+  - Iconos SVG inline para cada item de navegacion
+
+
+================================================================================
+5. COMPONENTES DE AUTENTICACION (src/components/auth/)
+================================================================================
+
+--------------------------------------------------------------------------------
+5.1 LoginForm.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Formulario de inicio de sesion para personal clinico (recepcionistas,
+  medicos y directores). Se muestra en el tab "Personal clinico" de LoginPage.
+
+Campos:
+  - Correo electronico (type="email", requerido)
+  - Contrasena (type="password", requerido)
+
+Flujo de autenticacion:
+  1. Usuario ingresa credenciales
+  2. Validacion local (formato email, campos no vacios)
+  3. Llamada a authService.login(email, password)
+  4. Si exitoso: guarda token y user en AuthContext y localStorage
+  5. Navega a /dashboard via useNavigate()
+  6. Si error: muestra mensaje del servidor
+
+Validaciones:
+  - Email: formato valido (regex)
+  - Password: campo no vacio
+
+--------------------------------------------------------------------------------
+5.2 LoginPacienteForm.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Formulario de inicio de sesion para pacientes. Se muestra en el tab
+  "Soy paciente" de LoginPage.
+
+Campos:
+  - Correo electronico (type="email", requerido)
+  - Contrasena (type="password", requerido)
+
+Flujo de autenticacion:
+  1. Paciente ingresa credenciales asignadas por la recepcionista
+  2. Llamada a authService.loginPaciente(email, password)
+  3. El backend busca en tabla "pacientes" (no en "usuarios")
+  4. Si exitoso: guarda token con rol 'paciente' en AuthContext
+  5. Navega a /mis-citas via useNavigate()
+
+Nota: Las credenciales del paciente son asignadas por la recepcionista
+al momento de registrar al paciente en el sistema.
+
+
+================================================================================
+6. COMPONENTES DE CITAS (src/components/appointments/)
+================================================================================
+
+--------------------------------------------------------------------------------
+6.1 AgendaView.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Vista principal de la agenda de citas. Muestra las citas de un dia
+  especifico en formato de tabla con acciones disponibles.
+
+Props:
+  Prop      Tipo      Descripcion
+  --------  --------  --------------------------------------------------------
+  onNew     function  Callback para abrir formulario de nueva cita
+  onEdit    function  Callback con objeto cita para editar: onEdit(cita)
+  onCancel  function  Callback con objeto cita para cancelar: onCancel(cita)
+
+Funcionalidad:
+  - Selector de fecha (input type="date") para navegar entre dias
+  - Carga citas automaticamente al montar y al cambiar la fecha
+  - Los medicos solo ven sus propias citas (filtrado en backend)
+  - Las recepcionistas y directores ven todas las citas del dia
+
+Columnas de la tabla:
+  Hora | Paciente | Medico | Motivo | Estado | Acciones
+
+Badges de estado:
+  programada  Azul    (#1a73e8)
+  completada  Verde   (#34a853)
+  cancelada   Rojo    (#ea4335)
+
+Acciones disponibles:
+  - Editar: visible solo para citas con estado "programada"
+  - Cancelar: visible solo para citas con estado "programada"
+
+Endpoint: GET /api/citas?fecha=YYYY-MM-DD
+
+--------------------------------------------------------------------------------
+6.2 CreateAppointmentForm.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Formulario para registrar una nueva cita medica.
+
+Props:
+  Prop       Tipo      Descripcion
+  ---------  --------  -------------------------------------------------------
+  onSuccess  function  Callback al crear exitosamente
+  onCancel   function  Callback para cerrar el formulario
+
+Campos:
+  - Buscar paciente (busqueda en tiempo real, minimo 2 caracteres)
+  - Medico (select con lista de medicos activos)
+  - Fecha (date picker)
+  - Hora (time picker)
+  - Motivo de consulta (textarea)
+
+Comportamiento especial:
+  - La busqueda de paciente hace GET /api/pacientes/buscar?q= con debounce
+  - Muestra lista desplegable de resultados de busqueda
+  - Al seleccionar paciente, muestra nombre completo en el campo
+
+Endpoint: POST /api/citas
+
+--------------------------------------------------------------------------------
+6.3 EditAppointmentForm.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Formulario para modificar una cita existente. Solo permite cambiar
+  fecha, hora y motivo (no el paciente ni el medico).
+
+Props:
+  Prop       Tipo      Descripcion
+  ---------  --------  -------------------------------------------------------
+  cita       object    Objeto con datos de la cita a editar
+  onSuccess  function  Callback al editar exitosamente
+  onCancel   function  Callback para cerrar el formulario
+
+Campos editables:
+  - Fecha
+  - Hora
+  - Motivo de consulta
+
+Campos de solo lectura (informativos):
+  - Nombre del paciente
+  - Nombre del medico
+
+Endpoint: PUT /api/citas/:id
+
+--------------------------------------------------------------------------------
+6.4 CancelAppointmentModal.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Modal de confirmacion para cancelar una cita. Muestra los datos
+  relevantes antes de confirmar la accion.
+
+Props:
+  Prop       Tipo      Descripcion
+  ---------  --------  -------------------------------------------------------
+  cita       object    Objeto con datos de la cita a cancelar
+  onSuccess  function  Callback al cancelar exitosamente
+  onClose    function  Callback para cerrar el modal sin cancelar
+
+Informacion mostrada:
+  - Nombre del paciente
+  - Nombre del medico
+  - Fecha y hora de la cita
+  - Motivo de consulta
+
+Accesibilidad:
+  - role="dialog" en el contenedor del modal
+  - aria-modal="true"
+  - aria-labelledby apunta al titulo del modal
+  - Foco atrapado dentro del modal mientras esta abierto
+  - Cierre con tecla Escape
+
+Endpoint: PATCH /api/citas/:id/cancelar
+
+
+
+================================================================================
+7. COMPONENTES DE PACIENTES (src/components/patients/)
+================================================================================
+
+--------------------------------------------------------------------------------
+7.1 PatientList.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Tabla de pacientes con funcionalidad de ver detalle y eliminar.
+  Incluye modales integrados para ambas acciones.
+
+Props:
+  Prop       Tipo      Descripcion
+  ---------  --------  -------------------------------------------------------
+  patients   array     Lista de objetos paciente a mostrar
+  onDeleted  function  Callback que se llama tras eliminar un paciente
+
+Columnas de la tabla:
+  Nombre | Correo | Telefono | Acciones
+
+Modal "Ver detalle":
+  Muestra todos los campos del paciente:
+  - Nombre completo
+  - Correo electronico
+  - Telefono
+  - Fecha de nacimiento
+  - CURP
+  - Direccion
+
+Modal "Eliminar":
+  - Muestra nombre del paciente para confirmar
+  - Boton "Confirmar eliminacion" (rojo) y "Cancelar"
+  - Si el paciente tiene citas programadas, el backend rechaza con
+    mensaje explicativo y se muestra el error al usuario
+
+Comportamiento tras eliminar:
+  - Llama a onDeleted() para que la pagina padre recargue la lista
+  - El borrado es logico (activo = FALSE en BD, no se elimina el registro)
+
+Roles con acceso a eliminar: recepcionista, director
+
+Endpoint: DELETE /api/pacientes/:id
+
+--------------------------------------------------------------------------------
+7.2 PatientForm.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Formulario para registrar un nuevo paciente en el sistema. Incluye
+  la creacion de credenciales de acceso para que el paciente pueda
+  iniciar sesion en la aplicacion.
+
+Campos:
+  Campo             Tipo    Requerido  Descripcion
+  ----------------  ------  ---------  ----------------------------------------
+  nombre            text    Si         Nombre(s) del paciente
+  apellido          text    Si         Apellido(s) del paciente
+  correo            email   Si         Email unico, usado para login
+  contrasena        pass    Si         Min 6 caracteres, para acceso del paciente
+  telefono          text    Si         10 digitos
+  fecha_nacimiento  date    Si         Fecha de nacimiento
+  curp              text    No         18 caracteres, formato CURP mexicano
+  direccion         text    No         Direccion completa
+
+Comportamiento especial tras registro exitoso:
+  - Muestra pantalla de confirmacion con las credenciales:
+    * Correo electronico
+    * Contrasena en texto plano (solo en este momento)
+  - La recepcionista debe entregar estas credenciales al paciente
+  - Boton "Registrar otro paciente" para limpiar el formulario
+
+Endpoint: POST /api/pacientes
+
+--------------------------------------------------------------------------------
+7.3 PatientSearch.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Barra de busqueda para filtrar pacientes por nombre, correo o CURP.
+
+Props:
+  Prop      Tipo      Descripcion
+  --------  --------  --------------------------------------------------------
+  onSearch  function  Callback con el texto de busqueda: onSearch(query)
+
+Comportamiento:
+  - Busqueda en tiempo real mientras el usuario escribe
+  - Llama a onSearch() con el valor actual del input
+  - La pagina padre decide si busca localmente o via API
+
+Endpoint sugerido: GET /api/pacientes/buscar?q=
+
+
+================================================================================
+8. COMPONENTES DE MEDICOS (src/components/doctors/)
+================================================================================
+
+--------------------------------------------------------------------------------
+8.1 DoctorList.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Contenedor que muestra la lista de medicos en formato de grid responsivo.
+
+Props:
+  Prop     Tipo   Descripcion
+  -------  -----  -------------------------------------------------------------
+  doctors  array  Lista de objetos medico a mostrar
+
+Layout:
+  CSS Grid con columnas automaticas de minimo 260px.
+  Se adapta al ancho disponible sin media queries explicitas.
+
+--------------------------------------------------------------------------------
+8.2 DoctorCard.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Tarjeta individual de medico con foto, nombre, especialidad y correo.
+
+Props:
+  Prop    Tipo    Descripcion
+  ------  ------  --------------------------------------------------------------
+  doctor  object  Objeto con datos del medico
+
+Campos mostrados:
+  - Foto de perfil (desde S3 o imagen placeholder si no carga)
+  - Nombre completo con prefijo "Dr." / "Dra."
+  - Especialidad medica
+  - Correo electronico
+
+Comportamiento de la foto:
+  - Intenta cargar desde la URL almacenada en la BD
+  - Si falla la carga (onError), muestra imagen placeholder generica
+
+
+================================================================================
+9. COMPONENTES DE USUARIOS (src/components/users/)
+================================================================================
+
+Acceso restringido: Solo el rol "director" puede ver y usar estos componentes.
+
+--------------------------------------------------------------------------------
+9.1 UserForm.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Formulario para crear nuevos usuarios del sistema (recepcionistas,
+  medicos y directores).
+
+Campos base (todos los roles):
+  Campo              Tipo    Requerido  Descripcion
+  -----------------  ------  ---------  ----------------------------------------
+  nombre             text    Si         Nombre(s) del usuario
+  apellido           text    Si         Apellido(s) del usuario
+  correo             email   Si         Email unico para login
+  contrasena         pass    Si         Min 8 caracteres
+  confirmar_pass     pass    Si         Debe coincidir con contrasena
+  rol                select  Si         recepcionista | medico | director
+
+Campos adicionales (solo cuando rol = "medico"):
+  Campo              Tipo    Requerido  Descripcion
+  -----------------  ------  ---------  ----------------------------------------
+  especialidad       text    Si         Especialidad medica
+  cedula             text    No         Cedula profesional
+
+Comportamiento:
+  - Los campos de medico aparecen/desaparecen dinamicamente segun el rol
+  - Valida que las contrasenas coincidan antes de enviar
+  - Muestra error especifico si el correo ya esta registrado (409)
+
+Endpoint: POST /api/auth/register
+
+--------------------------------------------------------------------------------
+9.2 UserList.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Tabla de usuarios del sistema con indicadores visuales de rol y estado,
+  y control de activacion/desactivacion.
+
+Props:
+  Prop       Tipo      Descripcion
+  ---------  --------  -------------------------------------------------------
+  users      array     Lista de objetos usuario
+  onToggle   function  Callback para activar/desactivar: onToggle(id)
+  loadingId  number    ID del usuario con operacion en curso (muestra spinner)
+
+Columnas de la tabla:
+  Nombre | Correo | Rol | Estado | Acciones
+
+Badges de rol:
+  director        Morado  (#7c3aed)
+  medico          Azul    (#1a73e8)
+  recepcionista   Verde   (#34a853)
+
+Badges de estado:
+  Activo    Verde  (#34a853)
+  Inactivo  Rojo   (#ea4335)
+
+Comportamiento visual:
+  - Filas de usuarios inactivos con opacidad reducida (0.6)
+  - Boton "Desactivar" para usuarios activos
+  - Boton "Activar" para usuarios inactivos
+  - Spinner individual en el boton del usuario que se esta procesando
+
+Endpoint: PATCH /api/auth/usuarios/:id/toggle
+
+
+================================================================================
+10. COMPONENTES DE DASHBOARD (src/components/dashboard/)
+================================================================================
+
+--------------------------------------------------------------------------------
+10.1 Dashboard.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Panel de estadisticas del dia actual. Muestra un resumen rapido del
+  estado de las citas para la fecha de hoy.
+
+Props: Ninguna
+
+Tarjetas de estadisticas:
+  Tarjeta         Descripcion                    Color del icono
+  --------------  -----------------------------  ---------------
+  Citas hoy       Total de citas del dia         Azul
+  Programadas     Citas con estado programada    Azul
+  Completadas     Citas con estado completada    Verde
+  Canceladas      Citas con estado cancelada     Rojo
+
+Comportamiento:
+  - Carga citas del dia actual al montar el componente
+  - Calcula los conteos localmente desde los datos recibidos
+  - Muestra estado de carga mientras obtiene los datos
+
+Endpoint: GET /api/citas?fecha=YYYY-MM-DD (con fecha del dia actual)
+
+
+
+================================================================================
+11. PAGINAS Y RUTAS (src/pages/)
+================================================================================
+
+11.1 Tabla de Paginas
+----------------------
+
+Pagina          Archivo            Ruta          Roles permitidos
+--------------  -----------------  ------------  ----------------------------
+Login           LoginPage.jsx      /login        Todos (sin autenticar)
+Dashboard       DashboardPage.jsx  /dashboard    recepcionista, medico, director
+Agenda          AgendaPage.jsx     /agenda       recepcionista, medico
+Pacientes       PatientsPage.jsx   /pacientes    recepcionista
+Medicos         DoctorsPage.jsx    /medicos      recepcionista, director
+Usuarios        UsersPage.jsx      /usuarios     director
+Mis Citas       MisCitasPage.jsx   /mis-citas    paciente
+No encontrada   NotFoundPage.jsx   /*            Todos
+
+11.2 Descripcion de Paginas
+-----------------------------
+
+LoginPage.jsx
+  Pagina de inicio de sesion con dos tabs:
+  - "Personal clinico": muestra LoginForm.jsx
+  - "Soy paciente": muestra LoginPacienteForm.jsx
+  Redirige a /dashboard (staff) o /mis-citas (paciente) si ya hay sesion.
+
+DashboardPage.jsx
+  Envuelve el componente Dashboard.jsx.
+  Muestra estadisticas del dia actual.
+
+AgendaPage.jsx
+  Pagina principal de gestion de citas.
+  Orquesta AgendaView, CreateAppointmentForm, EditAppointmentForm
+  y CancelAppointmentModal.
+  Maneja el estado de que modal/formulario esta abierto.
+
+PatientsPage.jsx
+  Gestion completa de pacientes.
+  Incluye PatientSearch, PatientForm y PatientList.
+  Boton "Nuevo paciente" muestra/oculta el formulario.
+  Mensajes de exito con auto-desaparicion (3 segundos).
+
+DoctorsPage.jsx
+  Muestra el grid de medicos via DoctorList y DoctorCard.
+  Solo lectura, sin acciones de edicion.
+
+UsersPage.jsx
+  Gestion de usuarios del sistema (solo director).
+  Incluye UserForm y UserList.
+  Boton "Nuevo usuario" muestra/oculta el formulario.
+
+MisCitasPage.jsx
+  Vista de citas para pacientes autenticados.
+  Muestra citas proximas e historial de citas pasadas.
+  Endpoint: GET /api/auth/mis-citas
+
+NotFoundPage.jsx
+  Pagina 404 con mensaje y enlace para volver al inicio.
+
+11.3 Proteccion de Rutas
+--------------------------
+
+ProtectedLayout:
+  Componente que envuelve todas las rutas autenticadas.
+  Si no hay usuario en AuthContext, redirige a /login.
+  Renderiza Navbar + Sidebar + contenido de la ruta.
+
+HomeRedirect (/):
+  Redirige segun el rol del usuario autenticado:
+  - paciente  -> /mis-citas
+  - staff     -> /dashboard
+  - sin sesion -> /login
+
+LoginPage (redireccion inversa):
+  Si el usuario ya tiene sesion activa y navega a /login,
+  redirige automaticamente a su pagina de inicio.
+
+
+================================================================================
+12. SERVICIOS API (src/services/)
+================================================================================
+
+12.1 api.js - Configuracion Base de Axios
+------------------------------------------
+Instancia Axios compartida por todos los servicios.
+
+Configuracion:
+  baseURL:  REACT_APP_API_URL (definido en .env)
+  timeout:  10,000 ms (10 segundos)
+
+Interceptor de Request:
+  - Lee el token JWT de localStorage
+  - Agrega header: Authorization: Bearer <token>
+  - Se ejecuta en cada peticion automaticamente
+
+Interceptor de Response:
+  - Si el servidor responde con 401 (no autorizado):
+    * Limpia token y user de localStorage
+    * Redirige a /login
+  - Extrae el mensaje de error del response para mostrarlo al usuario
+
+12.2 authService.js
+--------------------
+Funcion                         Metodo  Endpoint                        Roles
+------------------------------  ------  ------------------------------  --------
+login(email, password)          POST    /auth/login                     Todos
+loginPaciente(email, password)  POST    /auth/login-paciente            Publico
+logout()                        -       (limpia localStorage)           -
+registerUser(data)              POST    /auth/register                  director
+getUsuarios()                   GET     /auth/usuarios                  director
+toggleUsuario(id)               PATCH   /auth/usuarios/:id/toggle       director
+getMisCitas()                   GET     /auth/mis-citas                 paciente
+
+Respuesta de login / loginPaciente:
+  { token: string, user: { id, nombre, apellido, email, rol } }
+
+12.3 appointmentService.js
+---------------------------
+Funcion                         Metodo  Endpoint                        Roles
+------------------------------  ------  ------------------------------  --------
+getAppointmentsByDate(fecha)    GET     /citas?fecha=YYYY-MM-DD         staff
+createAppointment(data)         POST    /citas                          recep.
+updateAppointment(id, data)     PUT     /citas/:id                      recep.
+cancelAppointment(id)           PATCH   /citas/:id/cancelar             recep.
+getMyAppointments()             GET     /citas/mis-citas                medico
+
+12.4 patientService.js
+-----------------------
+Funcion                  Metodo   Endpoint                    Roles
+-----------------------  -------  --------------------------  ----------------
+getPatients()            GET      /pacientes                  recep., director
+searchPatients(query)    GET      /pacientes/buscar?q=        recep.
+createPatient(data)      POST     /pacientes                  recep.
+getPatientById(id)       GET      /pacientes/:id              recep.
+deletePatient(id)        DELETE   /pacientes/:id              recep., director
+
+12.5 doctorService.js
+----------------------
+Funcion              Metodo  Endpoint         Roles
+-------------------  ------  ---------------  --------------------------------
+getDoctors()         GET     /medicos         recep., director
+getDoctorById(id)    GET     /medicos/:id     recep., director
+
+
+================================================================================
+13. CONTEXTO Y HOOKS (src/contexts/ y src/hooks/)
+================================================================================
+
+--------------------------------------------------------------------------------
+13.1 AuthContext.jsx
+--------------------------------------------------------------------------------
+Descripcion:
+  Contexto global de React que maneja el estado de autenticacion en toda
+  la aplicacion. Persiste la sesion en localStorage.
+
+Valores que provee:
+  Valor           Tipo      Descripcion
+  --------------  --------  --------------------------------------------------
+  user            object    Usuario autenticado o null si no hay sesion
+  login           function  Autentica personal clinico
+  loginPaciente   function  Autentica pacientes
+  logout          function  Cierra la sesion y limpia el estado
+  loading         boolean   true mientras verifica sesion al cargar la app
+
+Estructura del objeto user:
+  {
+    id:       number,
+    nombre:   string,
+    apellido: string,
+    email:    string,
+    rol:      'recepcionista' | 'medico' | 'director' | 'paciente'
+  }
+
+Persistencia:
+  - Al hacer login: guarda token y user en localStorage
+  - Al cargar la app: recupera sesion de localStorage si existe
+  - Al hacer logout: elimina token y user de localStorage
+
+--------------------------------------------------------------------------------
+13.2 useAuth.js
+--------------------------------------------------------------------------------
+Hook personalizado para acceder al AuthContext desde cualquier componente.
+
+Retorna: { user, login, loginPaciente, logout, loading }
+
+Uso:
+  import { useAuth } from '../hooks/useAuth';
+
+  const { user, logout } = useAuth();
+
+--------------------------------------------------------------------------------
+13.3 useForm.js
+--------------------------------------------------------------------------------
+Hook personalizado para manejo generico de formularios con validacion.
+
+Funcionalidad:
+  - Maneja el estado de los campos del formulario
+  - Ejecuta validaciones por campo
+  - Retorna errores de validacion por campo
+  - Provee funcion handleChange para actualizar campos
+
+Uso tipico:
+  const { form, errors, handleChange, validate } = useForm(
+    { email: '', password: '' },
+    validationRules
+  );
+
+
+================================================================================
+14. UTILIDADES (src/utils/)
+================================================================================
+
+14.1 validators.js
+-------------------
+Funcion                    Descripcion
+-------------------------  ---------------------------------------------------
+isValidEmail(email)        Valida formato de correo electronico (regex RFC)
+isValidPhone(phone)        Valida telefono de 10 digitos numericos
+isValidCURP(curp)          Valida formato CURP mexicano (18 caracteres)
+isNotEmpty(value)          Retorna true si el valor no es vacio ni solo espacios
+minLength(value, min)      Retorna true si la longitud es >= min
+
+14.2 formatters.js
+-------------------
+Funcion                    Descripcion                    Ejemplo
+-------------------------  -----------------------------  ----------------------
+formatDate(dateStr)        Fecha legible en espanol       '15 de mayo de 2026'
+formatTime(timeStr)        Hora en formato 12h            '10:30 AM'
+formatFullName(n, a)       Nombre completo concatenado    'Juan Garcia'
+
+
+================================================================================
+15. VARIABLES DE ENTORNO
+================================================================================
+
+Archivo: medisync-web/.env
+Ejemplo: medisync-web/.env.example
+
+IMPORTANTE: El archivo .env NO debe subirse a GitHub (esta en .gitignore).
+
+Variable              Descripcion                    Valor actual
+--------------------  -----------------------------  --------------------------
+REACT_APP_API_URL     URL base del backend           http://3.219.251.228:3000/api
+
+Nota importante sobre el build:
+  Las variables REACT_APP_* se incrustan en el bundle durante el build.
+  Si cambia la IP del backend, es necesario:
+  1. Actualizar REACT_APP_API_URL en .env
+  2. Eliminar la carpeta build/ anterior
+  3. Ejecutar npm run build nuevamente
+  4. Hacer deploy del nuevo build a S3
+
+
+================================================================================
+16. BUILD Y DEPLOY
+================================================================================
+
+16.1 Desarrollo Local
+----------------------
+  # Instalar dependencias
+  npm install
+
+  # Iniciar servidor de desarrollo
+  npm start
+  # Disponible en: http://localhost:3000
+
+16.2 Build de Produccion
+-------------------------
+  # Eliminar build anterior (evita cache de variables de entorno)
+  Remove-Item -Recurse -Force build
+
+  # Generar build optimizado
+  npm run build
+
+  # El build se genera en la carpeta build/
+
+16.3 Deploy a AWS S3
+---------------------
+  # Sincronizar build con el bucket S3
+  aws s3 sync build/ s3://medisync-web-20260501 --delete
+
+  # El flag --delete elimina archivos en S3 que ya no existen en el build
+
+  # URL de produccion:
+  # http://medisync-web-20260501.s3-website-us-east-1.amazonaws.com
+
+16.4 Verificacion del Deploy
+------------------------------
+  1. Abrir la URL de produccion en el navegador
+  2. Verificar que la pagina de login carga correctamente
+  3. Iniciar sesion con: admin@clinicasanangel.com / password
+  4. Verificar que el dashboard muestra datos reales del backend
+
+
+================================================================================
+FIN DE GUIA DE COMPONENTES WEB - VERSION FORMAL
+================================================================================
+Desarrollador: Henrique Alejandro Alvarado Castillo
+Proyecto: MediSync - Clinica San Angel
+Fecha: Mayo 2026
+================================================================================

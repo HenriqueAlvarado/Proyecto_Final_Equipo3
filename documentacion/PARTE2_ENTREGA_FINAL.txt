@@ -310,12 +310,14 @@ doctorService.js:
 
 4.1 Tecnicos
 --------------
-[ ] SendGrid configurado
-    - Crear cuenta en sendgrid.com (free tier: 100 correos/dia)
-    - Generar API Key
-    - Agregar SENDGRID_API_KEY al .env del EC2
-    - Reiniciar PM2
-    - Esto activa HU-13: notificacion por correo al agendar cita
+[x] SendGrid configurado - COMPLETADO 7 Mayo 2026
+    - Cuenta SendGrid con sender verificado: henrique.alvarado@gmail.com
+    - API Key generada y configurada en .env del EC2
+    - SENDGRID_FROM actualizado al sender verificado
+    - Fix en citas.routes.js: query adicional para obtener email y nombre
+      del paciente antes de llamar a sendAppointmentEmail()
+    - Verificado: correo llega exitosamente a henrique.alvarado@gmail.com
+    - HU-13 COMPLETA: notificacion por correo al agendar cita
 
 [ ] Datos de prueba en base de datos
     - Insertar medicos de ejemplo
@@ -532,6 +534,26 @@ Sintoma: Todos los endpoints de /api/pacientes y /api/auth/login-paciente
 Causa: Al agregar nuevas rutas, se pego el codigo al final del archivo
        sin eliminar el module.exports anterior.
 Solucion: Reescritura completa del archivo con estructura limpia.
+
+ERROR 8: sendAppointmentEmail no enviaba correo aunque el API Key estaba configurado
+Descripcion: Al crear una cita, el correo no se enviaba. El log mostraba
+             "SENDGRID_API_KEY no configurada" en intentos anteriores, y
+             luego 403 Forbidden al configurarla.
+Causa 1: El INSERT de citas solo devuelve los campos de la tabla citas
+         (paciente_id, medico_id, etc.) pero NO el email ni el nombre del
+         paciente. El email.service.js necesita paciente_email y
+         paciente_nombre que llegaban como undefined.
+Solucion 1: Agregar query adicional en POST /api/citas despues del INSERT
+            para obtener los datos completos del paciente y medico:
+            SELECT p.email, p.nombre, u.nombre AS medico_nombre FROM citas
+            JOIN pacientes JOIN medicos JOIN usuarios WHERE citas.id = $1
+
+Causa 2: El SENDGRID_FROM estaba configurado como noreply@clinicasanangel.com
+         que no es un sender verificado en SendGrid. SendGrid retorna 403
+         si el remitente no esta verificado como Single Sender.
+Solucion 2: Actualizar SENDGRID_FROM en el .env del EC2 al email verificado:
+            SENDGRID_FROM=henrique.alvarado@gmail.com
+            Reiniciar PM2 para que tome el nuevo valor.
 
 
 --------------------------------------------------------------------------------

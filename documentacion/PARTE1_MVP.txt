@@ -355,8 +355,8 @@ Variables de entorno (.env en EC2):
     DB_PASSWORD=MediSync2026!
     JWT_SECRET=MediSync_JWT_Secret_ClínicaSanAngel_2026_Seguro
     JWT_EXPIRES_IN=8h
-    SENDGRID_API_KEY=(pendiente configurar)
-    SENDGRID_FROM=noreply@clinicasanangel.com
+    SENDGRID_API_KEY=(configurado en EC2 - 7 Mayo 2026)
+    SENDGRID_FROM=henrique.alvarado@gmail.com
     S3_BUCKET_FOTOS=medisync-fotos-20260501
     AWS_REGION=us-east-1
     FRONTEND_URL=*
@@ -605,7 +605,7 @@ Infraestructura AWS:
 [x] Security Groups configurados
 
 Pendiente para MVP completo:
-[ ] Configurar SendGrid API Key para envio de correos (HU-13)
+[x] Configurar SendGrid API Key para envio de correos (HU-13) - COMPLETADO 7 Mayo
 [ ] Datos de prueba en la base de datos
 [x] Login de pacientes con credenciales asignadas por recepcion
 [x] Vista de mis citas para pacientes
