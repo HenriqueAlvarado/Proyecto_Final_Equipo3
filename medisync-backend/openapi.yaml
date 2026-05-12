@@ -1,0 +1,1055 @@
+openapi: 3.0.3
+info:
+  title: MediSync API
+  description: |
+    API REST para el sistema de gestión de citas médicas MediSync - Clínica San Ángel.
+
+    ## Autenticación
+    La mayoría de endpoints requieren un token JWT en el header:
+    ```
+    Authorization: Bearer <token>
+    ```
+    El token se obtiene mediante los endpoints de login.
+
+    ## Roles
+    - **director**: Acceso total. Gestiona usuarios del sistema.
+    - **recepcionista**: Gestiona citas y pacientes.
+    - **medico**: Ve sus propias citas.
+    - **paciente**: Ve sus propias citas.
+  version: 1.0.0
+  contact:
+    name: Henrique Alejandro Alvarado Castillo
+    email: henrique.alvarado@gmail.com
+
+servers:
+  - url: http://3.219.251.228:3000/api
+    description: Producción (AWS EC2)
+  - url: http://localhost:3000/api
+    description: Desarrollo local
+
+tags:
+  - name: Health
+    description: Estado del servidor
+  - name: Autenticación
+    description: Login, logout y gestión de usuarios del sistema
+  - name: Citas
+    description: Gestión de citas médicas
+  - name: Pacientes
+    description: Gestión de pacientes
+  - name: Médicos
+    description: Consulta de médicos
+
+paths:
+
+  /health:
+    get:
+      tags: [Health]
+      summary: Verificar estado del servidor
+      description: Endpoint público para verificar que la API está en línea.
+      security: []
+      responses:
+        '200':
+          description: Servidor en línea
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-05-07T19:30:00.000Z'
+
+  /auth/login:
+    post:
+      tags: [Autenticación]
+      summary: Login de personal clínico
+      description: Autentica recepcionistas, médicos y directores. Retorna JWT.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: admin@clinicasanangel.com
+              password: password
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/login-paciente:
+    post:
+      tags: [Autenticación]
+      summary: Login de paciente
+      description: |
+        Autentica pacientes usando credenciales asignadas por recepción.
+        Busca en la tabla `pacientes`, no en `usuarios`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login exitoso
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/logout:
+    post:
+      tags: [Autenticación]
+      summary: Cerrar sesión
+      description: El servidor confirma el logout. El cliente debe eliminar el token localmente.
+      security: []
+      responses:
+        '200':
+          description: Sesión cerrada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Sesión cerrada correctamente
+
+  /auth/register:
+    post:
+      tags: [Autenticación]
+      summary: Registrar nuevo usuario del sistema
+      description: |
+        Crea un nuevo usuario (recepcionista, médico o director).
+        Si el rol es `medico`, también crea el registro en la tabla `medicos`.
+        Usa transacción de BD para garantizar consistencia.
+        **Requiere rol: director**
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              recepcionista:
+                summary: Crear recepcionista
+                value:
+                  nombre: María
+                  apellido: González
+                  email: maria@clinica.com
+                  password: password123
+                  rol: recepcionista
+              medico:
+                summary: Crear médico
+                value:
+                  nombre: Carlos
+                  apellido: Ramírez
+                  email: carlos@clinica.com
+                  password: password123
+                  rol: medico
+                  especialidad: Cardiología
+                  cedula_profesional: '1234567'
+      responses:
+        '201':
+          description: Usuario creado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Usuario creado exitosamente
+                  user:
+                    $ref: '#/components/schemas/Usuario'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '409':
+          description: Email ya registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: Ya existe un usuario con ese correo
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/usuarios:
+    get:
+      tags: [Autenticación]
+      summary: Listar usuarios del sistema
+      description: |
+        Retorna todos los usuarios con su información de médico si aplica.
+        **Requiere rol: director**
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de usuarios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UsuarioDetalle'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/usuarios/{id}/toggle:
+    patch:
+      tags: [Autenticación]
+      summary: Activar o desactivar usuario
+      description: |
+        Cambia el estado `activo` del usuario (NOT activo).
+        Un director no puede desactivarse a sí mismo.
+        **Requiere rol: director**
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Estado actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Usuario'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /auth/mis-citas:
+    get:
+      tags: [Autenticación]
+      summary: Citas del paciente autenticado
+      description: |
+        Retorna todas las citas del paciente que está autenticado.
+        **Requiere rol: paciente**
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de citas del paciente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CitaPaciente'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /citas:
+    get:
+      tags: [Citas]
+      summary: Listar citas por fecha
+      description: |
+        Retorna citas del día especificado.
+        Los médicos solo ven sus propias citas. Recepcionistas y directores ven todas.
+        **Requiere autenticación**
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: fecha
+          in: query
+          description: Fecha en formato YYYY-MM-DD
+          required: false
+          schema:
+            type: string
+            format: date
+            example: '2026-05-07'
+      responses:
+        '200':
+          description: Lista de citas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CitaDetalle'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Citas]
+      summary: Crear nueva cita
+      description: |
+        Registra una nueva cita médica. Verifica disponibilidad del médico.
+        Envía correo de confirmación al paciente via SendGrid.
+        **Requiere autenticación**
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CitaRequest'
+            example:
+              paciente_id: 1
+              medico_id: 1
+              fecha: '2026-05-10'
+              hora: '10:00'
+              motivo: Consulta general
+      responses:
+        '201':
+          description: Cita creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cita'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Conflicto de horario
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: El médico ya tiene una cita en ese horario
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /citas/{id}:
+    put:
+      tags: [Citas]
+      summary: Modificar cita
+      description: |
+        Actualiza fecha, hora y motivo de una cita con estado `programada`.
+        **Requiere autenticación**
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fecha, hora, motivo]
+              properties:
+                fecha:
+                  type: string
+                  format: date
+                  example: '2026-05-12'
+                hora:
+                  type: string
+                  example: '11:00'
+                motivo:
+                  type: string
+                  example: Seguimiento de tratamiento
+      responses:
+        '200':
+          description: Cita actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cita'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /citas/{id}/cancelar:
+    patch:
+      tags: [Citas]
+      summary: Cancelar cita
+      description: |
+        Cambia el estado de la cita a `cancelada`.
+        Solo funciona si la cita está en estado `programada`.
+        **Requiere autenticación**
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Cita cancelada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cita'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /citas/mis-citas:
+    get:
+      tags: [Citas]
+      summary: Citas del médico autenticado
+      description: |
+        Retorna todas las citas asignadas al médico autenticado.
+        **Requiere rol: medico**
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de citas del médico
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cita'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /pacientes:
+    get:
+      tags: [Pacientes]
+      summary: Listar pacientes activos
+      description: Retorna todos los pacientes con estado activo. **Requiere autenticación**
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de pacientes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Paciente'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    post:
+      tags: [Pacientes]
+      summary: Registrar nuevo paciente
+      description: |
+        Crea un nuevo paciente con credenciales de acceso al sistema.
+        El password se almacena como hash bcrypt.
+        **Requiere autenticación**
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PacienteRequest'
+      responses:
+        '201':
+          description: Paciente registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paciente'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '409':
+          description: Email o CURP ya registrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /pacientes/buscar:
+    get:
+      tags: [Pacientes]
+      summary: Buscar pacientes
+      description: |
+        Busca por nombre, apellido, email o CURP. Mínimo 2 caracteres. Máximo 20 resultados.
+        **Requiere autenticación**
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Texto a buscar (mínimo 2 caracteres)
+          schema:
+            type: string
+            minLength: 2
+            example: Juan
+      responses:
+        '200':
+          description: Resultados de búsqueda
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Paciente'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /pacientes/{id}:
+    get:
+      tags: [Pacientes]
+      summary: Obtener paciente por ID
+      description: Retorna el detalle completo de un paciente activo. **Requiere autenticación**
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Datos del paciente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paciente'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+    delete:
+      tags: [Pacientes]
+      summary: Eliminar paciente (borrado lógico)
+      description: |
+        Marca el paciente como inactivo. No elimina el registro de la BD.
+        Falla si el paciente tiene citas con estado `programada`.
+        **Requiere rol: recepcionista o director**
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Paciente eliminado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Paciente eliminado correctamente
+                  paciente:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      nombre:
+                        type: string
+                      apellido:
+                        type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Paciente tiene citas programadas activas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                message: No se puede eliminar - el paciente tiene citas programadas. Cancélalas primero.
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /pacientes/{id}/citas:
+    get:
+      tags: [Pacientes]
+      summary: Citas de un paciente específico
+      description: |
+        Retorna el historial de citas de un paciente.
+        Un paciente solo puede ver sus propias citas.
+        **Requiere autenticación**
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Historial de citas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CitaPaciente'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /medicos:
+    get:
+      tags: [Médicos]
+      summary: Listar médicos activos
+      description: Retorna todos los médicos con usuario activo. **Requiere autenticación**
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de médicos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Medico'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /medicos/{id}:
+    get:
+      tags: [Médicos]
+      summary: Obtener médico por ID
+      description: Retorna el detalle de un médico activo. **Requiere autenticación**
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Datos del médico
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Medico'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Token JWT obtenido del endpoint de login
+
+  parameters:
+    IdPath:
+      name: id
+      in: path
+      required: true
+      description: ID numérico del recurso
+      schema:
+        type: integer
+        example: 1
+
+  responses:
+    BadRequest:
+      description: Datos de entrada inválidos
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Todos los campos son requeridos
+    Unauthorized:
+      description: Token ausente, inválido o expirado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Token no proporcionado
+    Forbidden:
+      description: Sin permisos para esta acción
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: No tienes permisos para esta acción
+    NotFound:
+      description: Recurso no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Recurso no encontrado
+    InternalError:
+      description: Error interno del servidor
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            message: Error interno del servidor
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: admin@clinicasanangel.com
+        password:
+          type: string
+          format: password
+          example: password
+
+    LoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          description: JWT con expiración de 8 horas
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        user:
+          $ref: '#/components/schemas/UsuarioSesion'
+
+    UsuarioSesion:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          example: Admin
+        apellido:
+          type: string
+          example: Sistema
+        email:
+          type: string
+          example: admin@clinicasanangel.com
+        rol:
+          type: string
+          enum: [director, recepcionista, medico, paciente]
+          example: director
+
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        apellido:
+          type: string
+        email:
+          type: string
+        rol:
+          type: string
+          enum: [director, recepcionista, medico]
+
+    UsuarioDetalle:
+      allOf:
+        - $ref: '#/components/schemas/Usuario'
+        - type: object
+          properties:
+            activo:
+              type: boolean
+            created_at:
+              type: string
+              format: date-time
+            especialidad:
+              type: string
+              nullable: true
+              example: Cardiología
+            cedula_profesional:
+              type: string
+              nullable: true
+              example: '1234567'
+
+    RegisterRequest:
+      type: object
+      required: [nombre, apellido, email, password, rol]
+      properties:
+        nombre:
+          type: string
+          example: María
+        apellido:
+          type: string
+          example: González
+        email:
+          type: string
+          format: email
+          example: maria@clinica.com
+        password:
+          type: string
+          minLength: 8
+          example: password123
+        rol:
+          type: string
+          enum: [recepcionista, medico, director]
+          example: recepcionista
+        especialidad:
+          type: string
+          description: Requerido si rol es medico
+          example: Cardiología
+        cedula_profesional:
+          type: string
+          description: Opcional
+          example: '1234567'
+
+    Cita:
+      type: object
+      properties:
+        id:
+          type: integer
+        paciente_id:
+          type: integer
+        medico_id:
+          type: integer
+        fecha:
+          type: string
+          format: date
+          example: '2026-05-10'
+        hora:
+          type: string
+          example: '10:00:00'
+        motivo:
+          type: string
+          example: Consulta general
+        estado:
+          type: string
+          enum: [programada, completada, cancelada]
+          example: programada
+        notas:
+          type: string
+          nullable: true
+        created_by:
+          type: integer
+
+    CitaDetalle:
+      type: object
+      properties:
+        id:
+          type: integer
+        fecha:
+          type: string
+          format: date
+        hora:
+          type: string
+        motivo:
+          type: string
+        estado:
+          type: string
+          enum: [programada, completada, cancelada]
+        notas:
+          type: string
+          nullable: true
+        paciente_nombre:
+          type: string
+          example: Juan García
+        paciente_id:
+          type: integer
+        medico_nombre:
+          type: string
+          example: Carlos Ramírez
+        medico_id:
+          type: integer
+        especialidad:
+          type: string
+          example: Cardiología
+
+    CitaRequest:
+      type: object
+      required: [paciente_id, medico_id, fecha, hora, motivo]
+      properties:
+        paciente_id:
+          type: integer
+          example: 1
+        medico_id:
+          type: integer
+          example: 1
+        fecha:
+          type: string
+          format: date
+          example: '2026-05-10'
+        hora:
+          type: string
+          example: '10:00'
+        motivo:
+          type: string
+          example: Consulta general
+
+    CitaPaciente:
+      type: object
+      properties:
+        id:
+          type: integer
+        fecha:
+          type: string
+          format: date
+        hora:
+          type: string
+        motivo:
+          type: string
+        estado:
+          type: string
+          enum: [programada, completada, cancelada]
+        notas:
+          type: string
+          nullable: true
+        medico_nombre:
+          type: string
+          example: Carlos Ramírez
+        especialidad:
+          type: string
+          example: Cardiología
+
+    Paciente:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+          example: Juan
+        apellido:
+          type: string
+          example: García
+        email:
+          type: string
+          example: juan@gmail.com
+        telefono:
+          type: string
+          example: '8112345678'
+        fecha_nacimiento:
+          type: string
+          format: date
+          example: '1990-03-15'
+        curp:
+          type: string
+          example: GAJJ900315HNLRCN09
+        direccion:
+          type: string
+          example: Av. Principal 123, Monterrey
+
+    PacienteRequest:
+      type: object
+      required: [nombre, apellido, email, password]
+      properties:
+        nombre:
+          type: string
+          example: Juan
+        apellido:
+          type: string
+          example: García
+        email:
+          type: string
+          format: email
+          example: juan@gmail.com
+        password:
+          type: string
+          minLength: 6
+          example: pass123
+        telefono:
+          type: string
+          example: '8112345678'
+        fecha_nacimiento:
+          type: string
+          format: date
+          example: '1990-03-15'
+        curp:
+          type: string
+          example: GAJJ900315HNLRCN09
+        direccion:
+          type: string
+          example: Av. Principal 123, Monterrey
+
+    Medico:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+          example: Carlos
+        apellido:
+          type: string
+          example: Ramírez
+        email:
+          type: string
+          example: carlos@clinica.com
+        especialidad:
+          type: string
+          example: Cardiología
+        cedula_profesional:
+          type: string
+          nullable: true
+          example: '1234567'
+        foto_url:
+          type: string
+          nullable: true
+          example: https://medisync-fotos-20260501.s3.amazonaws.com/medico1.jpg
