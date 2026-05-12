@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/database');
 const { authMiddleware } = require('../middleware/auth.middleware');
-const { sendAppointmentEmail } = require('../services/email.service');
+const { sendAppointmentEmail, sendCancellationEmail } = require('../services/email.service');
 
 // Todas las rutas requieren autenticación
 router.use(authMiddleware);
@@ -98,13 +98,13 @@ router.post('/', async (req, res) => {
 // PUT /api/citas/:id
 router.put('/:id', async (req, res) => {
   const { id } = req.params;
-  const { fecha, hora, motivo } = req.body;
+  const { fecha, hora, motivo, notas } = req.body;
 
   try {
     const result = await pool.query(
-      `UPDATE citas SET fecha = $1, hora = $2, motivo = $3, updated_at = NOW()
-       WHERE id = $4 AND estado = 'programada' RETURNING *`,
-      [fecha, hora, motivo, id]
+      `UPDATE citas SET fecha = $1, hora = $2, motivo = $3, notas = $4, updated_at = NOW()
+       WHERE id = $5 AND estado = 'programada' RETURNING *`,
+      [fecha, hora, motivo, notas || null, id]
     );
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Cita no encontrada o no se puede modificar' });
@@ -128,6 +128,23 @@ router.patch('/:id/cancelar', async (req, res) => {
     if (result.rows.length === 0) {
       return res.status(404).json({ message: 'Cita no encontrada o ya fue cancelada' });
     }
+
+    // Enviar correo de notificación de cancelación al paciente
+    const citaCompleta = await pool.query(
+      `SELECT c.fecha, c.hora, c.motivo,
+              p.nombre || ' ' || p.apellido AS paciente_nombre, p.email AS paciente_email,
+              u.nombre || ' ' || u.apellido AS medico_nombre
+       FROM citas c
+       JOIN pacientes p ON c.paciente_id = p.id
+       JOIN medicos m ON c.medico_id = m.id
+       JOIN usuarios u ON m.usuario_id = u.id
+       WHERE c.id = $1`,
+      [id]
+    );
+    if (citaCompleta.rows.length > 0) {
+      sendCancellationEmail(citaCompleta.rows[0]).catch(err => console.error('Error enviando correo cancelación:', err));
+    }
+
     res.json(result.rows[0]);
   } catch (err) {
     console.error(err);

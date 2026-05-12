@@ -48,4 +48,52 @@ const sendAppointmentEmail = async (cita) => {
   console.log(`✉️ Correo enviado a ${paciente_email}`);
 };
 
-module.exports = { sendAppointmentEmail };
+/**
+ * Envía correo de cancelación de cita usando SendGrid API
+ * @param {object} cita - Datos de la cita cancelada
+ */
+const sendCancellationEmail = async (cita) => {
+  const apiKey = process.env.SENDGRID_API_KEY;
+  if (!apiKey) {
+    console.warn('SENDGRID_API_KEY no configurada, omitiendo envío de correo');
+    return;
+  }
+
+  const { paciente_email, paciente_nombre, medico_nombre, fecha, hora, motivo } = cita;
+  if (!paciente_email) return;
+
+  const emailData = {
+    personalizations: [{
+      to: [{ email: paciente_email }],
+      subject: 'Cita cancelada - Clínica San Ángel',
+    }],
+    from: { email: process.env.SENDGRID_FROM || 'noreply@clinicasanangel.com', name: 'Clínica San Ángel' },
+    content: [{
+      type: 'text/html',
+      value: `
+        <h2>Cita médica cancelada</h2>
+        <p>Estimado/a <strong>${paciente_nombre}</strong>,</p>
+        <p>Le informamos que la siguiente cita ha sido <strong>cancelada</strong>:</p>
+        <ul>
+          <li><strong>Médico:</strong> Dr. ${medico_nombre}</li>
+          <li><strong>Fecha:</strong> ${fecha}</li>
+          <li><strong>Hora:</strong> ${hora}</li>
+          <li><strong>Motivo original:</strong> ${motivo}</li>
+        </ul>
+        <p>Si desea reagendar su cita, comuníquese con recepción.</p>
+        <p>Clínica San Ángel</p>
+      `,
+    }],
+  };
+
+  await axios.post('https://api.sendgrid.com/v3/mail/send', emailData, {
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+  console.log(`✉️ Correo de cancelación enviado a ${paciente_email}`);
+};
+
+module.exports = { sendAppointmentEmail, sendCancellationEmail };
