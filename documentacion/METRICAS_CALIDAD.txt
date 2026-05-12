@@ -1,0 +1,530 @@
+================================================================================
+MEDISYNC - CLINICA SAN ANGEL
+DOCUMENTO DE METRICAS DE CALIDAD
+================================================================================
+Proyecto:      MediSync - Sistema de Gestion de Citas Medicas
+Equipo:        Equipo 3
+Responsable:   Henrique Alejandro Alvarado Castillo (Dev Web / Product Owner)
+Fecha:         12 de Mayo de 2026
+Entrega:       Entrega Final
+================================================================================
+
+INDICE
+------
+1.  Metricas del Producto
+2.  Metricas del Proceso
+3.  Errores Encontrados y Tiempo de Resolucion
+4.  Cobertura de Pruebas
+5.  Metricas de Infraestructura
+6.  Metricas de Historias de Usuario
+7.  Deuda Tecnica Identificada
+8.  Resumen Ejecutivo
+
+
+================================================================================
+1. METRICAS DEL PRODUCTO
+================================================================================
+
+1.1 Funcionalidad entregada
+-----------------------------
+Historias de usuario comprometidas (web):   10
+Historias de usuario completadas (web):     10
+Porcentaje de completitud:                  100%
+
+Modulos adicionales implementados:           3
+  - Gestion de usuarios (director)
+  - Login y vista de citas para pacientes
+  - Detalle y eliminacion de pacientes
+
+1.2 Tamano del codigo fuente
+------------------------------
+Componente          Archivos    Lineas aprox.
+------------------  ---------   -------------
+Frontend (React)       42          3,200
+Backend (Node.js)       9          1,100
+Pruebas automatizadas   4            350
+Documentacion           6          2,800
+SQL (schema + seed)     2            280
+                   ---------   -------------
+TOTAL                  63          7,730
+
+1.3 Endpoints de la API
+------------------------
+Total de endpoints documentados:   18
+Endpoints con autenticacion JWT:   16
+Endpoints publicos:                 2  (login, login-paciente)
+Endpoints con control de roles:    10
+
+Distribucion por recurso:
+  /api/auth       7 endpoints
+  /api/citas      5 endpoints
+  /api/pacientes  5 endpoints
+  /api/medicos    2 endpoints
+  /health         1 endpoint (fuera del prefijo /api)
+
+1.4 Pantallas funcionales
+--------------------------
+Pantalla            Roles con acceso              Datos reales
+------------------  ----------------------------  ------------
+Login               Todos (sin autenticar)        Si
+Dashboard           recepcionista, medico,        Si
+                    director
+Agenda              recepcionista, medico         Si
+Pacientes           recepcionista                 Si
+Medicos             recepcionista, director       Si
+Usuarios            director                      Si
+Mis Citas           paciente                      Si
+404                 Todos                         N/A
+
+Total pantallas funcionales con datos reales: 7
+
+
+================================================================================
+2. METRICAS DEL PROCESO
+================================================================================
+
+2.1 Duracion del proyecto
+--------------------------
+Fecha de inicio:          4 de Mayo de 2026
+Fecha de entrega MVP:     7 de Mayo de 2026
+Fecha de entrega final:  12 de Mayo de 2026
+Duracion total:           8 dias calendario
+
+2.2 Velocidad de desarrollo
+-----------------------------
+Historias completadas en sprint MVP (4 dias):   10
+Modulos adicionales en sprint final (5 dias):    3
+Promedio de historias por dia:                   2.5
+
+2.3 Distribucion del tiempo estimado
+--------------------------------------
+Actividad                               Tiempo estimado
+--------------------------------------  ---------------
+Configuracion de infraestructura AWS    1 dia
+Desarrollo del backend (API REST)       1.5 dias
+Desarrollo del frontend (React)         2 dias
+Integracion y pruebas                   0.5 dias
+Correcciones de bugs                    1 dia
+Documentacion                           1 dia
+Modulos adicionales post-MVP            1 dia
+                                        ---------------
+TOTAL                                   8 dias
+
+2.4 Commits en el repositorio
+-------------------------------
+Commits principales registrados:
+  1. feat: estructura inicial medisync-web con infraestructura AWS
+  2. feat: backend Node.js + Express completo para MVP
+  3. feat: registro y gestion de usuarios
+  4. fix: CORS abierto para todos los origenes en lab
+  5. fix: obtener datos completos del paciente/medico antes de enviar correo
+  6. docs: HU-13 completada - SendGrid configurado y correos funcionando
+  7. test: 30 pruebas automatizadas backend y frontend - MVP completo
+  8. docs: especificacion OpenAPI completa + Swagger UI publicado en S3
+  9. feat: datos de prueba representativos en BD
+  10. docs: README principal y READMEs actualizados
+
+
+================================================================================
+3. ERRORES ENCONTRADOS Y TIEMPO DE RESOLUCION
+================================================================================
+
+Se documentaron 15 errores durante el desarrollo. A continuacion se presentan
+con su clasificacion, impacto y tiempo de resolucion.
+
+Clasificacion de severidad:
+  CRITICO  - Bloquea funcionalidad principal del sistema
+  ALTO     - Afecta una funcionalidad importante
+  MEDIO    - Afecta experiencia de usuario o flujo secundario
+  BAJO     - Problema menor o de configuracion
+
+--------------------------------------------------------------------------------
+ERR-01 | IP Carrier-Grade NAT no accesible desde internet
+--------------------------------------------------------------------------------
+Severidad:    CRITICO
+Componente:   Infraestructura AWS (EC2)
+Descripcion:  AWS Academy asigno IP 100.31.109.89 (rango CGN) que no es
+              accesible desde internet externo. Dispositivos externos no
+              podian conectarse al backend.
+Tiempo deteccion:  Inmediato al intentar acceder desde celular
+Tiempo resolucion: 30 minutos
+Solucion:     Asignar Elastic IP fija (3.219.251.228)
+Recurrencia:  No (solucion permanente)
+
+--------------------------------------------------------------------------------
+ERR-02 | CORS con origin "*" como string no funciona con credentials
+--------------------------------------------------------------------------------
+Severidad:    CRITICO
+Componente:   Backend (src/index.js)
+Descripcion:  Express rechaza el string "*" en la opcion origin cuando
+              credentials: true esta activo. El frontend recibia timeout.
+Tiempo deteccion:  Al hacer primera peticion desde el frontend
+Tiempo resolucion: 20 minutos
+Solucion:     Usar funcion callback: origin: (origin, cb) => cb(null, true)
+Recurrencia:  No
+
+--------------------------------------------------------------------------------
+ERR-03 | Build de React con IP vieja quemada en cache
+--------------------------------------------------------------------------------
+Severidad:    ALTO
+Componente:   Frontend (proceso de build)
+Descripcion:  Al cambiar REACT_APP_API_URL en .env, el build seguia usando
+              la IP anterior porque react-scripts cachea el bundle.
+Tiempo deteccion:  Al verificar que el frontend seguia apuntando a IP vieja
+Tiempo resolucion: 5 minutos
+Solucion:     Eliminar carpeta build/ antes de npm run build
+Recurrencia:  2 veces (cada cambio de IP)
+
+--------------------------------------------------------------------------------
+ERR-04 | Race condition en redirect de paciente tras login
+--------------------------------------------------------------------------------
+Severidad:    ALTO
+Componente:   Frontend (AuthContext, LoginPage)
+Descripcion:  Al hacer login como paciente, el sistema mostraba pagina 404.
+              LoginPage detectaba el usuario y hacia <Navigate to="/mis-citas">,
+              pero ProtectedLayout ejecutaba su render antes de que el contexto
+              se actualizara, viendo user como null y redirigiendo a /login,
+              creando un loop que terminaba en 404.
+Tiempo deteccion:  Al probar login de paciente por primera vez
+Tiempo resolucion: 45 minutos
+Solucion:     Usar useNavigate() directamente en los formularios de login
+              en lugar de depender del redirect del LoginPage.
+Recurrencia:  No
+
+--------------------------------------------------------------------------------
+ERR-05 | Codigo duplicado en pacientes.routes.js
+--------------------------------------------------------------------------------
+Severidad:    CRITICO
+Componente:   Backend (pacientes.routes.js)
+Descripcion:  El archivo tenia dos bloques de rutas y dos module.exports.
+              El segundo sobreescribia al primero, dejando todas las rutas
+              de pacientes sin registrar en Express.
+Sintoma:      Todos los endpoints /api/pacientes retornaban 404.
+Tiempo deteccion:  Al probar endpoints de pacientes
+Tiempo resolucion: 30 minutos
+Solucion:     Reescritura completa del archivo con estructura limpia
+Recurrencia:  No
+
+--------------------------------------------------------------------------------
+ERR-06 | sendAppointmentEmail no enviaba correo (datos faltantes)
+--------------------------------------------------------------------------------
+Severidad:    ALTO
+Componente:   Backend (citas.routes.js)
+Descripcion:  El INSERT de citas devuelve solo IDs (paciente_id, medico_id).
+              El email.service.js necesita paciente_email y paciente_nombre
+              que llegaban como undefined, por lo que el correo nunca se enviaba.
+Tiempo deteccion:  Al revisar logs de PM2 tras configurar SendGrid
+Tiempo resolucion: 15 minutos
+Solucion:     Query adicional despues del INSERT para obtener datos completos
+Recurrencia:  No
+
+--------------------------------------------------------------------------------
+ERR-07 | SendGrid 403 Forbidden - sender no verificado
+--------------------------------------------------------------------------------
+Severidad:    ALTO
+Componente:   Backend (email.service.js) + configuracion SendGrid
+Descripcion:  SENDGRID_FROM estaba configurado como noreply@clinicasanangel.com
+              que no es un sender verificado en SendGrid. La API retorna 403
+              si el remitente no esta verificado como Single Sender.
+Tiempo deteccion:  Al revisar logs tras primer intento de envio
+Tiempo resolucion: 10 minutos
+Solucion:     Actualizar SENDGRID_FROM al email verificado en SendGrid
+Recurrencia:  No
+
+--------------------------------------------------------------------------------
+ERR-08 | git pull no actualiza archivos en EC2 via SSM (permisos root)
+--------------------------------------------------------------------------------
+Severidad:    MEDIO
+Componente:   Proceso de deploy (EC2)
+Descripcion:  SSM ejecuta comandos como root. El repo fue clonado por ec2-user.
+              git pull como root no actualiza los archivos del repo de ec2-user.
+Tiempo deteccion:  Al verificar que el backend seguia con codigo viejo
+Tiempo resolucion: 20 minutos
+Solucion:     Usar SSH directo con ec2-user en lugar de SSM para git pull
+Recurrencia:  Cada reinicio del lab (solucion: siempre usar SSH)
+
+--------------------------------------------------------------------------------
+ERR-09 | CloudFront no disponible en AWS Academy
+--------------------------------------------------------------------------------
+Severidad:    MEDIO
+Componente:   Infraestructura (CloudFront)
+Descripcion:  AWS Academy no permite crear distribuciones CloudFront.
+              El frontend no puede servirse por HTTPS.
+Impacto:      Chrome movil fuerza HTTPS y bloquea la pagina.
+Tiempo deteccion:  Al intentar configurar HTTPS
+Tiempo resolucion: N/A (limitacion del entorno, no tiene solucion en AWS Academy)
+Solucion adoptada: Usar Firefox o Samsung Internet que respetan HTTP.
+Recurrencia:  Permanente (limitacion del entorno)
+
+--------------------------------------------------------------------------------
+ERR-10 | PM2 pierde procesos al reiniciar el laboratorio
+--------------------------------------------------------------------------------
+Severidad:    BAJO
+Componente:   Infraestructura (EC2 + PM2)
+Descripcion:  Cada vez que el lab de AWS Academy se pausa y reinicia,
+              PM2 no recupera automaticamente los procesos aunque se haya
+              ejecutado pm2 save. El EC2 reinicia completamente.
+Tiempo deteccion:  Al primer reinicio del lab
+Tiempo resolucion: 2 minutos (levantar manualmente)
+Solucion:     Procedimiento documentado: conectar por SSH y ejecutar
+              pm2 start src/index.js --name medisync-api
+Recurrencia:  Cada reinicio del lab
+
+--------------------------------------------------------------------------------
+ERR-11 | IP del EC2 cambia al reiniciar el lab
+--------------------------------------------------------------------------------
+Severidad:    ALTO (antes de la solucion)
+Componente:   Infraestructura (EC2)
+Descripcion:  Sin Elastic IP, cada reinicio del lab asignaba una nueva IP
+              al EC2, requiriendo rebuild del frontend.
+Tiempo deteccion:  Al segundo reinicio del lab
+Tiempo resolucion: 30 minutos (asignar Elastic IP)
+Solucion:     Elastic IP fija 3.219.251.228 (solucion permanente)
+Recurrencia:  No (solucion permanente)
+
+Resumen de errores:
+  Total errores documentados:   11
+  Criticos:                      3  (ERR-01, ERR-02, ERR-05)
+  Altos:                         5  (ERR-03, ERR-04, ERR-06, ERR-07, ERR-11)
+  Medios:                        2  (ERR-08, ERR-09)
+  Bajos:                         1  (ERR-10)
+  Resueltos:                    10
+  Sin solucion (limitacion):     1  (ERR-09 - CloudFront en AWS Academy)
+
+Tiempo total de resolucion de errores: ~3.5 horas
+Tiempo promedio por error resuelto:    ~21 minutos
+
+
+================================================================================
+4. COBERTURA DE PRUEBAS
+================================================================================
+
+4.1 Pruebas automatizadas
+--------------------------
+Framework backend:   Jest 29.7 + Supertest 6.3
+Framework frontend:  Jest (incluido en react-scripts / CRA)
+
+Suite                                   Pruebas  Pasadas  Fallidas
+--------------------------------------  -------  -------  --------
+Middleware de Autenticacion (backend)       6        6        0
+Servicio de Email SendGrid (backend)        4        4        0
+Validadores de Formularios (frontend)      10       10        0
+Formateadores de Datos (frontend)          10       10        0
+--------------------------------------  -------  -------  --------
+TOTAL                                      30       30        0
+
+Tasa de exito: 100%
+
+4.2 Modulos cubiertos por pruebas automatizadas
+-------------------------------------------------
+Modulo                          Tipo          Cobertura
+------------------------------  ------------  ---------
+auth.middleware.js              Unitaria      Alta
+email.service.js                Unitaria      Alta
+utils/validators.js             Unitaria      Alta
+utils/formatters.js             Unitaria      Alta
+
+Modulos sin pruebas automatizadas (probados manualmente):
+  - Rutas Express (auth, citas, pacientes, medicos)
+  - Componentes React (LoginForm, AgendaView, etc.)
+  - Flujos de integracion end-to-end
+
+4.3 Casos de prueba por categoria
+-----------------------------------
+Categoria                       Casos   Tipo
+------------------------------  ------  ----------------
+Autenticacion y autorizacion        6   Unitaria
+Envio de correos                    4   Unitaria (mock)
+Validacion de formularios          10   Unitaria
+Formateo de datos                  10   Unitaria
+Pruebas manuales documentadas      15   Manual (estimado)
+                                ------
+TOTAL                              45
+
+4.4 Nota sobre cobertura de lineas
+------------------------------------
+No se configuro un reporte de cobertura de lineas (istanbul/nyc) en este
+proyecto por limitaciones de tiempo. Los modulos cubiertos por pruebas
+automatizadas tienen cobertura funcional alta (todos los caminos principales
+y casos borde estan probados). Para una version futura se recomienda agregar:
+  npm install --save-dev @jest/coverage-provider
+  jest --coverage
+
+
+================================================================================
+5. METRICAS DE INFRAESTRUCTURA
+================================================================================
+
+5.1 Disponibilidad del sistema
+--------------------------------
+Periodo de observacion:   8 dias (4 al 12 de Mayo 2026)
+Interrupciones planificadas: Reinicios del laboratorio AWS Academy
+Interrupciones no planificadas: 0
+Disponibilidad estimada:  ~95% (las interrupciones son por el lab, no el sistema)
+
+5.2 Recursos AWS utilizados
+-----------------------------
+Recurso             Tipo/Tamano       Costo estimado (lab gratuito)
+------------------  ----------------  -----------------------------
+EC2                 t2.micro          $0 (AWS Academy)
+RDS PostgreSQL      db.t3.micro       $0 (AWS Academy)
+S3 Web              Static hosting    $0 (< 1 GB)
+S3 Fotos            Standard          $0 (< 1 GB)
+Elastic IP          1 IP              $0 (asociada a instancia)
+Transferencia       < 1 GB/mes        $0
+
+5.3 Base de datos en produccion
+---------------------------------
+Tablas:             4 (usuarios, medicos, pacientes, citas)
+Indices:            5 (fecha, medico, paciente, email, curp)
+Registros actuales:
+  usuarios:         8  (1 director, 2 recepcionistas, 5 medicos)
+  medicos:          5  (5 especialidades distintas)
+  pacientes:        8  (activos con datos completos)
+  citas:           23  (programadas, completadas, canceladas)
+
+5.4 Rendimiento observado
+--------------------------
+Tiempo de respuesta promedio (medido manualmente):
+  GET /api/citas?fecha=       < 300 ms
+  POST /api/citas             < 400 ms
+  GET /api/pacientes          < 200 ms
+  POST /api/auth/login        < 500 ms (incluye bcrypt)
+
+Tiempo de carga del frontend (S3):
+  Primera carga:              < 2 segundos
+  Carga subsecuente (cache):  < 500 ms
+
+
+================================================================================
+6. METRICAS DE HISTORIAS DE USUARIO
+================================================================================
+
+6.1 Estado final del backlog web
+----------------------------------
+HU      Descripcion                         Prioridad  Estado      Sprint
+------  ----------------------------------  ---------  ----------  ------
+HU-01   Login recepcionista (web)           Alta       Completada  MVP
+HU-04   Crear cita (web)                   Alta       Completada  MVP
+HU-05   Ver agenda del dia (web)           Alta       Completada  MVP
+HU-06   Cancelar cita (web)               Alta       Completada  MVP
+HU-07   Modificar cita (web)              Alta       Completada  MVP
+HU-10   Ver lista de medicos (web)         Media      Completada  MVP
+HU-13   Notificacion por correo            Media      Completada  MVP+
+HU-15   Registrar nuevo paciente (web)     Alta       Completada  MVP
+HU-18   Cerrar sesion (web)               Alta       Completada  MVP
+HU-21   Ver agenda como medico (web)       Alta       Completada  MVP
+HU-AD1  Login de paciente (web)            Media      Completada  Post-MVP
+HU-AD2  Ver mis citas (paciente)           Media      Completada  Post-MVP
+HU-AD3  Gestion de usuarios (director)     Media      Completada  Post-MVP
+
+Total comprometidas:   10
+Total completadas:     13  (3 adicionales no comprometidas originalmente)
+Porcentaje completitud: 100% de lo comprometido, 130% del alcance original
+
+6.2 Historias canceladas
+--------------------------
+HU-MOV  App movil (2+ pantallas)
+Razon:  Decision del equipo - fuera del alcance por limitaciones de tiempo
+        y recursos. Cancelada antes del MVP.
+Impacto: Ninguno en la entrega web.
+
+6.3 Criterios de aceptacion cumplidos
+---------------------------------------
+Criterio                                          Estado
+------------------------------------------------  --------
+Sistema desplegado en AWS con URL publica         Cumplido
+App web con 3+ pantallas con datos reales         Cumplido (7 pantallas)
+Web consume la misma API backend                  Cumplido
+Pruebas documentadas (minimo 5 casos)             Cumplido (30 pruebas)
+Especificacion OpenAPI/Swagger                    Cumplido
+Base de datos con datos de prueba                 Cumplido
+README claro en repositorio                       Cumplido
+Guia de componentes web                           Cumplido
+
+
+================================================================================
+7. DEUDA TECNICA IDENTIFICADA
+================================================================================
+
+La siguiente deuda tecnica fue identificada durante el desarrollo pero no
+se implemento por limitaciones de tiempo del proyecto de laboratorio.
+Se documenta para transparencia y mejora futura.
+
+DT-01 | Sin HTTPS en el frontend
+  Impacto:    Medio - Chrome movil fuerza HTTPS
+  Causa:      CloudFront no disponible en AWS Academy
+  Solucion:   Migrar a un proveedor que soporte HTTPS (Vercel, Netlify,
+              o AWS fuera del lab)
+
+DT-02 | CORS abierto para todos los origenes
+  Impacto:    Bajo (entorno de laboratorio)
+  Causa:      IPs dinamicas del lab y S3 HTTP requieren flexibilidad
+  Solucion:   En produccion real, restringir a dominio especifico del frontend
+
+DT-03 | Sin TypeScript
+  Impacto:    Bajo - mayor riesgo de errores de tipo en runtime
+  Causa:      Decision de velocidad de desarrollo
+  Solucion:   Migrar gradualmente a TypeScript en version futura
+
+DT-04 | Sin pruebas de integracion end-to-end
+  Impacto:    Medio - flujos completos no estan automatizados
+  Causa:      Limitacion de tiempo
+  Solucion:   Agregar Cypress o Playwright para pruebas E2E
+
+DT-05 | PM2 sin startup automatico
+  Impacto:    Bajo (solo afecta reinicios del lab)
+  Causa:      pm2 startup requiere permisos de root en EC2
+  Solucion:   Ejecutar pm2 startup y seguir las instrucciones generadas
+
+DT-06 | Sin reporte de cobertura de lineas
+  Impacto:    Bajo - no se puede medir cobertura exacta
+  Causa:      Limitacion de tiempo
+  Solucion:   Agregar jest --coverage al script de test
+
+
+================================================================================
+8. RESUMEN EJECUTIVO
+================================================================================
+
+Indicadores clave del producto:
+  Historias completadas:          13/10 (130% del alcance comprometido)
+  Pantallas funcionales:          7
+  Endpoints de API:               18
+  Pruebas automatizadas:          30/30 pasando (100%)
+  Errores criticos resueltos:     3/3 (100%)
+  Errores totales resueltos:      10/11 (91%)
+
+Indicadores clave del proceso:
+  Duracion del proyecto:          8 dias
+  Velocidad promedio:             2.5 HU/dia
+  Tiempo en resolucion de bugs:   ~3.5 horas (~44% de 1 dia)
+  Commits principales:            10
+
+Calidad del codigo:
+  Lineas de codigo:               ~7,730
+  Archivos de documentacion:      6
+  Cobertura funcional (pruebas):  Alta en modulos criticos
+  Deuda tecnica identificada:     6 items (todos documentados)
+
+Conclusion:
+  El sistema MediSync fue entregado con el 100% de las historias de usuario
+  comprometidas completadas, mas 3 modulos adicionales no planificados
+  originalmente. La infraestructura AWS esta operativa y accesible desde
+  internet. Las pruebas automatizadas cubren los modulos mas criticos del
+  sistema (autenticacion y validacion). La documentacion tecnica esta
+  completa y actualizada.
+
+  La principal limitacion del proyecto fue el entorno de AWS Academy, que
+  impone restricciones en servicios como CloudFront y Cognito, y requiere
+  renovacion manual de credenciales. Estas limitaciones fueron documentadas
+  y mitigadas con soluciones alternativas.
+
+
+================================================================================
+FIN DE DOCUMENTO DE METRICAS DE CALIDAD
+================================================================================
+Desarrollador: Henrique Alejandro Alvarado Castillo
+Proyecto: MediSync - Clinica San Angel
+Fecha: 12 de Mayo de 2026
+================================================================================
