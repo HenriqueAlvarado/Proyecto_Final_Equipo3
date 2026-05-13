@@ -15,6 +15,7 @@ Permite a recepcionistas agendar citas, a médicos consultar su agenda y a pacie
 | API Backend | http://3.219.251.228:3000/api |
 | Documentación API (Swagger) | http://medisync-web-20260501.s3-website-us-east-1.amazonaws.com/api-docs.html |
 | Health check | http://3.219.251.228:3000/health |
+| Jira | https://valdezpintocesareduardo.atlassian.net/jira/software/projects/SCRUM/boards/1/backlog |
 
 ---
 
@@ -247,6 +248,6 @@ Ver `documentacion/PRUEBAS_AUTOMATIZADAS.txt` para el detalle completo.
 
 | Rol | Nombre |
 |---|---|
-| Product Owner / Dev Web | Henrique Alejandro Alvarado Castillo |
+| Product Owner / Dev Web | Henrique |
 | Scrum Master | César |
 | Arquitecto / Dev | Luis Alfonso |
